@@ -1,823 +1,992 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Vent Taxonomy">
-  <title>Vent Taxonomy Comparator</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Arial, sans-serif; font-size: 12px;
-      background: #f0f4ff; color: #1a1a1a; padding: 16px;
-      -webkit-text-size-adjust: 100%;
-    }
-    h1 { text-align: center; font-size: 18px; color: #003366; margin-bottom: 4px; }
-    .subtitle { text-align: center; font-size: 10px; color: #666; margin-bottom: 14px; line-height: 1.5; }
-    .formula-bar {
-      background: #003366; color: #fff; text-align: center;
-      font-family: monospace; font-size: 12px; padding: 8px;
-      border-radius: 6px; margin-bottom: 10px; word-break: break-word;
-    }
-    .invasive-badge-wrap { text-align: center; margin-bottom: 10px; }
-    .invasive-badge {
-      font-size: 11px; font-weight: bold; background: #e8f4e8;
-      border: 1.5px solid #006633; color: #006633;
-      border-radius: 20px; padding: 5px 18px; display: inline-block;
-    }
-    .reset-btn {
-      display: block; margin: 0 auto 14px auto; padding: 12px 28px;
-      background: #fff; border: 2px solid #003366; border-radius: 24px;
-      color: #003366; font-size: 15px; cursor: pointer;
-      min-height: 48px; min-width: 140px;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .reset-btn:active { background: #003366; color: #fff; }
-    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    @media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
-    .vent-panel { background: #fff; border-radius: 8px; border: 2px solid #003366; overflow: hidden; }
-    .vent-panel.right { border-color: #cc4400; }
-    .panel-header {
-      background: #003366; color: #fff; padding: 10px 12px;
-      font-size: 13px; font-weight: bold;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .vent-panel.right .panel-header { background: #cc4400; }
-    .badge-group { display: flex; gap: 4px; align-items: center; }
-    .auto-badge, .vent-auto-badge {
-      font-size: 9px; background: rgba(255,255,255,0.25);
-      border: 1px solid rgba(255,255,255,0.5); padding: 2px 6px;
-      border-radius: 10px; font-weight: normal; display: none;
-    }
-    .auto-badge.visible, .vent-auto-badge.visible { display: inline-block; }
-    .panel-body { padding: 12px; }
-    .select-group { margin-bottom: 12px; }
-    .select-group label {
-      display: block; font-size: 11px; font-weight: bold; color: #555;
-      margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    select {
-      display: block; width: 100%;
-      padding: 12px 36px 12px 12px;
-      border: 2px solid #ccc; border-radius: 8px;
-      font-size: 16px; color: #1a1a1a; background-color: #fff;
-      -webkit-appearance: none; -moz-appearance: none; appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath fill='%23666' d='M7 9L0 0h14z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 12px center;
-      min-height: 48px; cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    select:focus { outline: none; border-color: #003366; }
-    .vent-panel.right select:focus { border-color: #cc4400; }
-    select.visually-disabled { opacity: 0.4; background-color: #f0f0f0; pointer-events: none; }
-    select.matched-mode { border-color: #006633; background-color: #f0fff4; }
-    select.matched-vent { border-color: #6633cc; background-color: #f8f0ff; }
-    select.no-match     { border-color: #cc6600; background-color: #fff8f0; }
-    .tag-display {
-      background: #f0f4ff; border: 2px solid #003366;
-      border-radius: 6px; padding: 10px; text-align: center; margin: 10px 0;
-    }
-    .vent-panel.right .tag-display { background: #fff5f0; border-color: #cc4400; }
-    .tag-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-    .tag-value { font-family: monospace; font-size: 20px; font-weight: bold; color: #003366; margin: 4px 0; }
-    .vent-panel.right .tag-value { color: #cc4400; }
-    .breakdown { margin-top: 8px; }
-    .breakdown-row {
-      display: flex; align-items: stretch; margin-bottom: 6px;
-      border-radius: 4px; overflow: hidden; border: 1px solid #ddd;
-    }
-    .breakdown-key {
-      background: #003366; color: #fff; padding: 7px 10px;
-      font-size: 10px; font-weight: bold; width: 110px; min-width: 110px;
-      display: flex; align-items: center;
-    }
-    .vent-panel.right .breakdown-key { background: #cc4400; }
-    .breakdown-val {
-      background: #f8f8f8; padding: 7px 10px;
-      font-size: 11px; flex: 1; display: flex; align-items: center; line-height: 1.4;
-    }
-    .mono { font-family: monospace; font-weight: bold; }
-    .mfr-note {
-      display: none; margin-top: 8px; padding: 8px 10px;
-      background: #fff3cd; border: 1.5px solid #cc8800;
-      border-radius: 6px; font-size: 10px; color: #5a3e00; line-height: 1.5;
-    }
-    .mfr-note.show { display: block; }
-    .variety-section { background: #fff; border-radius: 8px; border: 2px solid #8833cc; margin-top: 14px; overflow: hidden; }
-    .variety-header {
-      background: #8833cc; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: bold;
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px;
-    }
-    .variety-tag-pill {
-      font-family: monospace; font-size: 11px;
-      background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
-      padding: 2px 10px; border-radius: 10px;
-    }
-    .variety-body { padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .variety-intro {
-      font-size: 10px; color: #555; margin-bottom: 10px;
-      background: #f8f0ff; border-left: 3px solid #8833cc;
-      padding: 6px 10px; border-radius: 4px; line-height: 1.5;
-    }
-    .variety-grid { display: grid; gap: 8px; }
-    .variety-grid.cols-2 { grid-template-columns: 1fr 1fr; }
-    .variety-grid.cols-3 { grid-template-columns: repeat(3,1fr); }
-    .variety-grid.cols-4 { grid-template-columns: repeat(4,1fr); }
-    .variety-grid.cols-5 { grid-template-columns: repeat(5,1fr); }
-    @media (max-width: 700px) {
-      .variety-grid.cols-2,.variety-grid.cols-3,
-      .variety-grid.cols-4,.variety-grid.cols-5 { grid-template-columns: 1fr; }
-    }
-    .variety-card { border-radius: 6px; border: 1.5px solid #ddd; overflow: hidden; }
-    .variety-card.active-a    { border-color: #003366; box-shadow: 0 0 0 2px #003366; }
-    .variety-card.active-b    { border-color: #cc4400; box-shadow: 0 0 0 2px #cc4400; }
-    .variety-card.active-both { border-color: #006633; box-shadow: 0 0 0 2px #006633; }
-    .variety-card-header {
-      padding: 5px 8px; font-size: 10px; font-weight: bold;
-      background: #f0f0f0; border-bottom: 1px solid #ddd;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .variety-card.active-a    .variety-card-header { background: #e8eeff; color: #003366; }
-    .variety-card.active-b    .variety-card-header { background: #fff0e8; color: #cc4400; }
-    .variety-card.active-both .variety-card-header { background: #e6ffe6; color: #006633; }
-    .variety-card-body { padding: 6px 8px; font-size: 10px; color: #444; line-height: 1.5; }
-    .variety-indicator { font-size: 9px; padding: 1px 5px; border-radius: 8px; font-weight: bold; white-space: nowrap; }
-    .ind-a    { background: #003366; color: #fff; }
-    .ind-b    { background: #cc4400; color: #fff; }
-    .ind-both { background: #006633; color: #fff; }
-    .variety-diff-row { margin-top: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #ccc; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .variety-diff-header { background: #8833cc; color: #fff; padding: 5px 10px; font-size: 10px; font-weight: bold; }
-    .variety-diff-table { width: 100%; border-collapse: collapse; font-size: 10px; min-width: 380px; }
-    .variety-diff-table th { background: #f0e8ff; padding: 4px 8px; text-align: left; font-weight: bold; color: #5500aa; border-bottom: 1px solid #ddd; }
-    .variety-diff-table td { padding: 4px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-    .variety-diff-table tr:last-child td { border-bottom: none; }
-    .variety-diff-table tr:nth-child(even) td { background: #faf6ff; }
-    .equiv-banner {
-      display: none; margin-top: 14px; padding: 12px 14px;
-      border-radius: 8px; font-size: 11px; border: 2px solid;
-      align-items: flex-start; gap: 10px;
-    }
-    .equiv-banner.show          { display: flex; }
-    .equiv-banner.match         { background: #e6ffe6; border-color: #006633; color: #004422; }
-    .equiv-banner.multi         { background: #e6f3ff; border-color: #003399; color: #001a55; }
-    .equiv-banner.no-match      { background: #fff8e6; border-color: #cc6600; color: #5a3000; }
-    .equiv-banner.taxonomy-diff { background: #fdecea; border-color: #cc0000; color: #5a0000; }
-    .equiv-icon { font-size: 20px; flex-shrink: 0; padding-top: 2px; }
-    .equiv-text { flex: 1; line-height: 1.6; }
-    .equiv-text strong { font-size: 12px; }
-    .multi-match-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .multi-match-chip {
-      background: #fff; border: 2px solid #003399; border-radius: 20px;
-      padding: 10px 16px; font-size: 12px; cursor: pointer;
-      color: #003399; font-family: monospace;
-      min-height: 48px; display: flex; align-items: center;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .multi-match-chip:active { background: #003399; color: #fff; }
-    .multi-match-chip.selected { background: #003399; color: #fff; }
-    .compare-section { background: #fff; border-radius: 8px; border: 2px solid #006633; margin-top: 14px; overflow: hidden; }
-    .compare-header  { background: #006633; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: bold; }
-    .compare-body    { padding: 12px; }
-    .compare-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .compare-table   { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 380px; }
-    .compare-table th { background: #006633; color: #fff; padding: 6px 10px; text-align: left; }
-    .compare-table td { padding: 6px 10px; border-bottom: 1px solid #ddd; vertical-align: top; }
-    .compare-table tr:nth-child(even) td { background: #f0fff4; }
-    .match-yes  { color: #006633; font-weight: bold; }
-    .match-no   { color: #cc0000; font-weight: bold; }
-    .match-cell { text-align: center; }
-    .highlight-match td { background: #e6ffe6 !important; }
-    .highlight-diff  td { background: #fff0f0 !important; }
-    .legend-section { background: #fff; border-radius: 8px; border: 2px solid #555; margin-top: 14px; overflow: hidden; }
-    .legend-header  { background: #555; color: #fff; padding: 8px 14px; font-size: 13px; font-weight: bold; }
-    .legend-grid    { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; padding: 10px; }
-    @media (max-width: 700px) { .legend-grid { grid-template-columns: repeat(4,1fr); } }
-    @media (max-width: 400px) { .legend-grid { grid-template-columns: repeat(2,1fr); } }
-    .legend-card { background: #f8f8f8; border: 1px solid #ccc; border-radius: 4px; padding: 6px; text-align: center; }
-    .legend-code { font-family: monospace; font-size: 16px; font-weight: bold; color: #cc4400; }
-    .legend-name { font-size: 9px; font-weight: bold; color: #333; margin: 2px 0; }
-    .legend-desc { font-size: 9px; color: #666; }
-    .notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    @media (max-width: 700px) { .notes-grid { grid-template-columns: 1fr; } }
-    .empty-state { color: #aaa; font-style: italic; text-align: center; padding: 20px; font-size: 11px; }
-    .footnote    { font-size: 9px; color: #888; text-align: center; margin-top: 12px; line-height: 1.6; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vent Taxonomy Tool</title>
+<style>
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text1: #1e293b;
+  --text2: #64748b;
+  --accent: #7c3aed;
+  --accent2: #a78bfa;
+  --border: #e2e8f0;
+  --green: #059669;
+  --red: #dc2626;
+  --amber: #d97706;
+  --blue: #2563eb;
+  --pill-bg: #f1f5f9;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text1: #f1f5f9;
+  --text2: #94a3b8;
+  --accent: #a78bfa;
+  --accent2: #7c3aed;
+  --border: #334155;
+  --pill-bg: #334155;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text1);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.app-header {
+  text-align: center;
+  padding: 1.5rem 1rem 0.5rem;
+}
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.main-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  flex-wrap: wrap;
+}
+.main-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--pill-bg);
+  color: var(--text2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.main-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+.tab-content {
+  display: none;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem 2rem;
+}
+.tab-content.active { display: block; }
+.sub-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0 1rem;
+  flex-wrap: wrap;
+}
+.sub-tab {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  background: var(--pill-bg);
+  color: var(--text2);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sub-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+.sub-content {
+  display: none;
+}
+.sub-content.active { display: block; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+.card h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--accent);
+}
+.card h4 {
+  font-size: 0.9rem;
+  margin: 0.75rem 0 0.25rem;
+  color: var(--text1);
+}
+.param-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+.param-item {
+  background: var(--pill-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+  border-left: 3px solid var(--accent);
+}
+.param-item .param-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text1);
+}
+.param-item .param-range {
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+.param-item .param-desc {
+  font-size: 0.82rem;
+  color: var(--text2);
+  margin-top: 0.25rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 0.5rem;
+}
+th, td {
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  background: var(--pill-bg);
+  font-weight: 600;
+  color: var(--text1);
+}
+.tag-formula {
+  background: var(--pill-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+}
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-amber { background: #fef3c7; color: #92400e; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+[data-theme="dark"] .badge-green { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .badge-red { background: #7f1d1d; color: #fca5a5; }
+[data-theme="dark"] .badge-amber { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .badge-blue { background: #1e3a5f; color: #93c5fd; }
+.toggle-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.toggle-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--pill-bg);
+  color: var(--text2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.abg-card {
+  background: var(--pill-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--accent);
+}
+.abg-card .abg-label {
+  font-size: 0.72rem;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.abg-card .abg-value {
+  font-size: 0.88rem;
+  color: var(--text1);
+  margin-top: 0.2rem;
+}
+.comparator-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+@media (max-width: 600px) {
+  .comparator-grid { grid-template-columns: 1fr; }
+}
+.comparator-col {
+  background: var(--pill-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+.comparator-col label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text2);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.comparator-col select {
+  width: 100%;
+  padding: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text1);
+  font-size: 0.85rem;
+}
+.comparison-table {
+  width: 100%;
+}
+.comparison-table th:first-child { width: 80px; }
+.chart-container {
+  text-align: center;
+  margin: 1rem 0;
+}
+.legend-item {
+  font-size: 0.82rem;
+  margin: 0.3rem 0;
+}
+.dark-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text1);
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.rehab-sub-tabs { margin-bottom: 1rem; }
+.rehab-sub-content { display: none; }
+.rehab-sub-content.active { display: block; }
+.warn-box {
+  background: #fef3c7;
+  border-left: 3px solid var(--amber);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+  color: #92400e;
+}
+[data-theme="dark"] .warn-box {
+  background: #78350f;
+  color: #fcd34d;
+}
+.good-box {
+  background: #d1fae5;
+  border-left: 3px solid var(--green);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+  color: #065f46;
+}
+[data-theme="dark"] .good-box {
+  background: #064e3b;
+  color: #6ee7b7;
+}
+.bad-box {
+  background: #fee2e2;
+  border-left: 3px solid var(--red);
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.82rem;
+  margin: 0.5rem 0;
+  color: #991b1b;
+}
+[data-theme="dark"] .bad-box {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+.eq-box {
+  background: var(--pill-bg);
+  border-radius: 8px;
+  padding: 0.75rem;
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  margin: 0.75rem 0;
+  color: var(--text1);
+}
+.cite {
+  font-size: 0.75rem;
+  color: var(--text2);
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+</style>
 </head>
 <body>
+<div class="app-header">
+  <h1>🫁 Vent Taxonomy Tool</h1>
+</div>
 
-<h1>🫁 Vent Taxonomy Comparator</h1>
-<div class="subtitle">
-  Hamilton Medical T1 vs Maquet Servo-U<br>
-  Chatburn, El-Khatib &amp; Mireles-Cabodevila, Respir Care 2014;59(11):1747–1763 [1]
-</div>
-<div class="formula-bar">
-  TAG = [Control Variable] – [Breath Sequence] – [Primary Targeting] , [Secondary Targeting]
-</div>
-<div class="invasive-badge-wrap">
-  <span class="invasive-badge">🔒 Invasive Ventilation Modes Only</span>
-</div>
-<button class="reset-btn" id="resetBtn">↺ Reset All</button>
+<nav class="main-tabs">
+  <button class="main-tab active" onclick="switchMain(0)">⚙️ Parameters</button>
+  <button class="main-tab" onclick="switchMain(1)">📖 Taxonomy</button>
+  <button class="main-tab" onclick="switchMain(2)">💪 Rehab</button>
+  <button class="main-tab" onclick="switchMain(3)">🔀 Comparator</button>
+</nav>
 
-<div class="main-grid">
-  <div class="vent-panel left">
-    <div class="panel-header">
-      🔵 Ventilator A
-      <div class="badge-group">
-        <span class="vent-auto-badge" id="ventBadgeA">AUTO</span>
-        <span class="auto-badge"      id="modeBadgeA">MATCHED</span>
+<!-- ==================== PARAMETERS TAB ==================== -->
+<div class="tab-content active" id="tab0">
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="switchSub(0,0)">ABG → Vent</button>
+    <button class="sub-tab" onclick="switchSub(0,1)">Oxygenation</button>
+    <button class="sub-tab" onclick="switchSub(0,2)">Ventilation</button>
+    <button class="sub-tab" onclick="switchSub(0,3)">Pressures</button>
+    <button class="sub-tab" onclick="switchSub(0,4)">Flow</button>
+    <button class="sub-tab" onclick="switchSub(0,5)">Mechanics</button>
+    <button class="sub-tab" onclick="switchSub(0,6)">Trigger/Cycle</button>
+  </div>
+
+  <!-- ABG sub-tab -->
+  <div class="sub-content active" id="sub0-0">
+    <div class="card">
+      <h3>🩸 ABG → Ventilator Adjustment</h3>
+      <div class="toggle-row">
+        <button class="toggle-btn active" onclick="toggleABG(this,'vc')">I'm in VC</button>
+        <button class="toggle-btn" onclick="toggleABG(this,'pc')">I'm in PC</button>
+      </div>
+      <div id="abg-content">
+        <div class="abg-card">
+          <div class="abg-label">🫁 Ventilation — Acidosis</div>
+          <div class="abg-value">
+            <strong>📋 PROBLEM</strong> ↑CO₂ / pH < 7.35<br>
+            <strong>💡 GOAL</strong> Increase CO₂ clearance<br>
+            <strong>🔧 LEVER</strong> Minute Ventilation (V̇E = VT × RR)<br>
+            <strong>💊 ACTION</strong> <span class="abg-vc">↑VT or ↑RR</span><span class="abg-pc" style="display:none">↑Pinsp (to ↑VT) or ↑RR</span><br>
+            <strong>⚠️</strong> <span class="abg-vc">Before ↑VT: check Pplat ≤ 30, ΔP < 15</span><span class="abg-pc" style="display:none">Monitor VT — may overdistend if compliance improves</span>
+          </div>
+        </div>
+        <div class="abg-card">
+          <div class="abg-label">🫁 Ventilation — Alkalosis</div>
+          <div class="abg-value">
+            <strong>📋 PROBLEM</strong> ↓CO₂ / pH > 7.45<br>
+            <strong>💡 GOAL</strong> Decrease CO₂ clearance<br>
+            <strong>🔧 LEVER</strong> ↓ Minute Ventilation<br>
+            <strong>💊 ACTION</strong> <span class="abg-vc">↓VT or ↓RR</span><span class="abg-pc" style="display:none">↓Pinsp (to ↓VT) or ↓RR</span><br>
+            <strong>⚠️</strong> <span class="abg-vc">Ensure VT ≥ 6 mL/kg PBW</span><span class="abg-pc" style="display:none">Ensure VT ≥ 6 mL/kg PBW; monitor for apnea if ↓RR</span>
+          </div>
+        </div>
+        <div class="abg-card">
+          <div class="abg-label">💨 Oxygenation — Hypoxemia</div>
+          <div class="abg-value">
+            <strong>📋 PROBLEM</strong> ↓PaO₂ / SpO₂ < 92%<br>
+            <strong>💡 GOAL</strong> Improve oxygen delivery<br>
+            <strong>🔧 LEVER</strong> FiO₂ + PEEP (alveolar recruitment)<br>
+            <strong>💊 ACTION</strong> ↑FiO₂ first → then ↑PEEP<br>
+            <strong>⚠️</strong> Before ↑PEEP: consider hemodynamics — may ↓CO
+          </div>
+        </div>
+        <div class="abg-card">
+          <div class="abg-label">💨 Oxygenation — Weaning</div>
+          <div class="abg-value">
+            <strong>📋 PROBLEM</strong> Adequate O₂ on high FiO₂<br>
+            <strong>💡 GOAL</strong> Reduce O₂ toxicity risk<br>
+            <strong>🔧 LEVER</strong> Wean FiO₂ → then PEEP<br>
+            <strong>💊 ACTION</strong> ↓FiO₂ to SpO₂ 92–96%, then ↓PEEP<br>
+            <strong>⚠️</strong> Wean FiO₂ before PEEP; monitor for derecruitment
+          </div>
+        </div>
       </div>
     </div>
-    <div class="panel-body">
-      <div class="select-group">
-        <label for="ventA">Select Ventilator</label>
-        <select id="ventA">
-          <option value="">-- Choose Ventilator --</option>
-          <option value="hamilton_t1">Hamilton Medical T1</option>
-          <option value="maquet_servou">Maquet Servo-U</option>
-        </select>
+  </div>
+
+  <!-- Oxygenation sub-tab -->
+  <div class="sub-content" id="sub0-1">
+    <div class="card">
+      <h3>💨 Oxygenation</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">FiO₂ <span class="param-range">0.21–1.0</span></div>
+          <div class="param-desc">The proportion of oxygen in the inspired gas delivered to the patient.<br>Target: SpO₂ 92–96%. "Should be set at the lowest value required to reach the oxygenation target" [4]. "In patients with a large shunt, increasing FiO₂ has only minimal impact on arterial oxygenation" [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">PEEP <span class="param-range">0–22 cmH₂O</span></div>
+          <div class="param-desc">Positive pressure maintained in the airway at end-expiration to prevent alveolar collapse and improve oxygenation.<br>"Can maintain open recruited lung areas" [4]. Risks: "Can also lead to overdistention" and "decrease cardiac output" [4].</div>
+        </div>
       </div>
-      <div class="select-group">
-        <label for="modeA">Select Mode</label>
-        <select id="modeA" class="visually-disabled">
-          <option value="">-- Choose a ventilator first --</option>
-        </select>
-      </div>
-      <div class="tag-display">
-        <div class="tag-label">Mode Tag</div>
-        <div class="tag-value" id="tagValueA">—</div>
-      </div>
-      <div class="breakdown" id="breakdownA"><div class="empty-state">Select a ventilator and mode above.</div></div>
-      <div class="mfr-note" id="mfrNoteA"></div>
     </div>
   </div>
 
-  <div class="vent-panel right">
-    <div class="panel-header">
-      🟠 Ventilator B
-      <div class="badge-group">
-        <span class="vent-auto-badge" id="ventBadgeB">AUTO</span>
-        <span class="auto-badge"      id="modeBadgeB">MATCHED</span>
+  <!-- Ventilation sub-tab -->
+  <div class="sub-content" id="sub0-2">
+    <div class="card">
+      <h3>🌬️ Ventilation</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">Tidal Volume (VT) <span class="param-range">6–8 mL/kg PBW</span></div>
+          <div class="param-desc">The volume of gas delivered during a single inspiration.<br>"Based on predicted body weight because lung size scales with PBW" [4]. In VC → set directly; In PC → dependent on mechanics [2].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Respiratory Rate <span class="param-range">10–35/min</span></div>
+          <div class="param-desc">The number of breathing cycles per minute (set or total).<br>CMV rate = minimum; IMV rate = maximum [2].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Minute Ventilation (V̇E) <span class="param-range">VT × RR</span></div>
+          <div class="param-desc">The total volume of gas exhaled per minute; the primary determinant of CO₂ clearance.<br>"Pressures must be monitored when VT is set, and volumes must be monitored when pressure is set" [4].</div>
+        </div>
       </div>
     </div>
-    <div class="panel-body">
-      <div class="select-group">
-        <label for="ventB">Select Ventilator</label>
-        <select id="ventB">
-          <option value="">-- Choose Ventilator --</option>
-          <option value="hamilton_t1">Hamilton Medical T1</option>
-          <option value="maquet_servou">Maquet Servo-U</option>
-        </select>
+  </div>
+
+  <!-- Pressures sub-tab -->
+  <div class="sub-content" id="sub0-3">
+    <div class="card">
+      <h3>📈 Pressures</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">Peak Pressure (Ppeak) <span class="param-range">Highest during inspiration</span></div>
+          <div class="param-desc">The maximum airway pressure during inspiration, reflecting both resistive and elastic loads.<br>In VC: R = (Ppeak−Pplat)/Flow [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Plateau Pressure (Pplat) <span class="param-range">≤ 30 cmH₂O</span></div>
+          <div class="param-desc">The airway pressure during zero-flow conditions (end-inspiratory pause), reflecting alveolar distending pressure.<br>"A measure of alveolar pressure, since resistance is zero at zero flow" [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Driving Pressure (ΔP) <span class="param-range">Pplat−PEEP < 15</span></div>
+          <div class="param-desc">The pressure difference representing tidal stress applied to the lung.<br>"Equal to VT/CRS" [4]. "Driving pressure change was the variable that best predicted mortality" [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Pinsp <span class="param-range">Set above PEEP</span></div>
+          <div class="param-desc">The set inspiratory pressure above PEEP that drives gas flow into the lungs during pressure-controlled breaths.<br>Determines VT in PC modes [2].</div>
+        </div>
       </div>
-      <div class="select-group">
-        <label for="modeB">Select Mode</label>
-        <select id="modeB" class="visually-disabled">
-          <option value="">-- Choose a ventilator first --</option>
-        </select>
+    </div>
+  </div>
+
+  <!-- Flow sub-tab -->
+  <div class="sub-content" id="sub0-4">
+    <div class="card">
+      <h3>🌊 Flow</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">Peak Inspiratory Flow <span class="param-range">≥ 50 L/min</span></div>
+          <div class="param-desc">The maximum gas flow rate during inspiration.<br>In PC: peak flow = ΔP/R [2]. Set ≥ 50 L/min to avoid flow starvation [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Flow Waveform <span class="param-range">Square vs ramp</span></div>
+          <div class="param-desc">The shape of inspiratory flow over time, determined by mode and settings.<br>"Not all descending ramp waveforms are the same" [2].</div>
+        </div>
       </div>
-      <div class="tag-display">
-        <div class="tag-label">Mode Tag</div>
-        <div class="tag-value" id="tagValueB">—</div>
+    </div>
+  </div>
+
+  <!-- Mechanics sub-tab -->
+  <div class="sub-content" id="sub0-5">
+    <div class="card">
+      <h3>🔧 Mechanics</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">Compliance (CRS) <span class="param-range">Normal ~50 mL/cmH₂O</span></div>
+          <div class="param-desc">The ease with which the respiratory system expands; the volume change per unit of pressure change.<br>Formula: CRS = VT/(Pplat − total PEEP) [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Elastance (E) <span class="param-range">Normal ~20 cmH₂O/L</span></div>
+          <div class="param-desc">The stiffness of the respiratory system; the pressure required to deliver a unit of volume. The inverse of compliance (E = 1/C).<br>High elastance = stiff lungs = low compliance [2].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Resistance (R) <span class="param-range">Normal < 10 cmH₂O/L/s</span></div>
+          <div class="param-desc">The opposition to gas flow through the airways.<br>Formula: R = (Ppeak−Pplat)/Flow [4].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Time Constant (τ) <span class="param-range">R×C ~0.5s</span></div>
+          <div class="param-desc">The time required for 63% of a pressure-driven volume change to occur.<br>Normal ~0.5s, ARDS ~0.4s, COPD ~1.3s [2]. Need 3–5τ for complete exhalation [2].</div>
+        </div>
       </div>
-      <div class="breakdown" id="breakdownB"><div class="empty-state">Select a ventilator and mode above.</div></div>
-      <div class="mfr-note" id="mfrNoteB"></div>
+    </div>
+  </div>
+
+  <!-- Trigger/Cycle sub-tab -->
+  <div class="sub-content" id="sub0-6">
+    <div class="card">
+      <h3>🎛️ Trigger & Cycle</h3>
+      <div class="param-grid">
+        <div class="param-item">
+          <div class="param-name">Trigger Sensitivity <span class="param-range">Flow 1–5 L/min or Pressure</span></div>
+          <div class="param-desc">The threshold of patient effort required to initiate a ventilator-delivered breath.<br>"Flow triggering results in less effort than pressure triggering" [2].</div>
+        </div>
+        <div class="param-item">
+          <div class="param-name">Flow Cycle Threshold <span class="param-range">30–70%</span></div>
+          <div class="param-desc">The percentage of peak inspiratory flow at which the ventilator terminates inspiration during pressure support.<br>"High % in obstructive lung disease, low in restrictive" [4].</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cite">[2] Mireles-Cabodevila 2022 · [3] Chatburn 2014 · [4] Pham et al. 2017</p>
+</div>
+
+<!-- ==================== TAXONOMY TAB ==================== -->
+<div class="tab-content" id="tab1">
+  <div class="tag-formula">TAG = Control Variable – Breath Sequence – Targeting Scheme(s)</div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" onclick="switchSub(1,0)">Foundations</button>
+    <button class="sub-tab" onclick="switchSub(1,1)">Control Variable</button>
+    <button class="sub-tab" onclick="switchSub(1,2)">Breath Sequence</button>
+    <button class="sub-tab" onclick="switchSub(1,3)">Targeting Schemes</button>
+  </div>
+
+  <!-- Foundations -->
+  <div class="sub-content active" id="sub1-0">
+    <div class="card">
+      <h3>🫁 Foundations</h3>
+      <h4>M1 | A breath = one cycle of positive and negative flow</h4>
+      <p style="font-size:0.85rem;color:var(--text2)">"A breath is one cycle of positive flow (inspiration) and negative flow (expiration) defined in terms of the flow-time curve" [3].</p>
+      <h4>M2 | Assisted ≠ Spontaneous</h4>
+      <p style="font-size:0.85rem;color:var(--text2)">"A breath is assisted if the ventilator provides some or all of the work of breathing" [3]. A spontaneous breath may be assisted or unassisted.</p>
+      <h4>🔗 Trigger & Cycle</h4>
+      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:0.5rem">Trigger = starts a breath | Cycle = stops a breath [3]</p>
+      <table>
+        <tr><th></th><th>Patient</th><th>Ventilator</th></tr>
+        <tr><td><strong>Trigger</strong><br><span style="font-size:0.75rem">(starts inspiration)</span></td><td>Flow change or Pressure change (effort)</td><td>Time (set rate interval)</td></tr>
+        <tr><td><strong>Cycle</strong><br><span style="font-size:0.75rem">(stops inspiration)</span></td><td>Flow decay (% of peak flow)</td><td>Time or Volume</td></tr>
+      </table>
+      <p style="font-size:0.82rem;margin-top:0.75rem"><strong>Spontaneous breath:</strong> Patient triggers AND patient cycles [3].</p>
+      <p style="font-size:0.82rem"><strong>Mandatory breath:</strong> Ventilator triggers AND/OR ventilator cycles [3].</p>
+      <p style="font-size:0.82rem;color:var(--text2);margin-top:0.5rem">"Flow cycling is a form of patient cycling because the rate of flow decay to the cycle threshold is determined by patient mechanics" [3].</p>
+    </div>
+  </div>
+
+  <!-- Control Variable -->
+  <div class="sub-content" id="sub1-1">
+    <div class="card">
+      <h3>⚙️ Control Variable</h3>
+      <h4>Why This Matters:</h4>
+      <p style="font-size:0.85rem;color:var(--text2);margin-bottom:0.75rem">Every breath requires pressure to overcome two forces: the stiffness of the lungs (elastic load) and the friction of air moving through tubes (resistive load). The equation of motion describes this relationship. Understanding it explains why different modes behave differently — and why some are better for active patients.</p>
+      <h4>Equation of Motion</h4>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.5rem">In plain terms: To deliver a breath, pressure must overcome:<br>
+      <strong>Elastic load</strong> (E × Volume) — stiffness of lungs and chest wall<br>
+      <strong>Resistive load</strong> (R × Flow) — friction through airways and ETT<br><br>
+      The ventilator controls EITHER pressure OR volume/flow — but not both. Whichever it controls, the other depends on patient mechanics. [2]</p>
+      <div class="eq-box">Pressure(t) = E × Volume(t) + R × Flow(t)<br><span style="font-size:0.8rem;color:var(--text2)">E = elastance [3] · R = resistance [3]</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:1rem">
+        <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;border-top:3px solid var(--blue)">
+          <strong style="color:var(--blue)">PC — Pressure predetermined</strong><br>
+          <span style="font-size:0.82rem;color:var(--text2)">
+            ✅ Set: Inspiratory pressure<br>
+            📈 Dependent: Volume/Flow vary with E, R<br>
+            👁️ Watch: Flow & Volume waveforms [2]<br>
+            💪 Effort: "Patient effort → more VT. Total work increases" [2].
+          </span>
+        </div>
+        <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;border-top:3px solid var(--green)">
+          <strong style="color:var(--green)">VC — Volume AND Flow predetermined</strong><br>
+          <span style="font-size:0.82rem;color:var(--text2)">
+            ✅ Set: VT AND flow<br>
+            📈 Dependent: Pressure varies<br>
+            👁️ Watch: Pressure waveform [2]<br>
+            💪 Effort: "Total work stays constant. As Pmus↑, Pvent↓. Patient can't get more volume" [2].
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breath Sequence -->
+  <div class="sub-content" id="sub1-2">
+    <div class="card">
+      <h3>📊 Breath Sequence</h3>
+      <h4>CMV | Continuous Mandatory Ventilation</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">Every breath is ventilator-cycled → every breath is mandatory [3]. Set rate = minimum [3].</p>
+      <div class="warn-box">⚠️ Common misconception: "CMV means the patient can't trigger." WRONG.<br>The patient CAN trigger — but every breath is still mandatory because the ventilator controls when inspiration STOPS (cycle) [3].</div>
+      <h4>IMV | Intermittent Mandatory Ventilation</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">Spontaneous breaths possible between mandatory breaths [3]. Set rate = maximum [3].</p>
+      <table>
+        <tr><th>Sub-type</th><th>Description</th></tr>
+        <tr><td>IMV(1)</td><td>Mandatory always at set rate. Spontaneous allowed between [2].</td></tr>
+        <tr><td>IMV(2)</td><td>Spontaneous breaths suppress mandatory [2].</td></tr>
+        <tr><td>IMV(3)</td><td>Spontaneous MV suppresses mandatory [2].</td></tr>
+        <tr><td>IMV(4)</td><td>Dual targeting creates spontaneous breaths within apparent CMV [2].</td></tr>
+      </table>
+      <h4>CSV | Continuous Spontaneous Ventilation</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">All breaths patient-triggered AND patient-cycled [3].</p>
+      <div class="warn-box">VC-CSV is not possible: "Volume control implies ventilator cycling, and ventilator cycling makes every breath mandatory" [3].</div>
+    </div>
+  </div>
+
+  <!-- Targeting Schemes -->
+  <div class="sub-content" id="sub1-3">
+    <div class="card">
+      <h3>🎯 Targeting Schemes</h3>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.5rem">Comma = different TS per breath type [3].</p>
+      <table>
+        <tr><th>TS</th><th>Name</th><th>Definition</th><th></th></tr>
+        <tr><td><strong>s</strong></td><td>Set-point</td><td>Operator sets all parameters of pressure (PC) or volume/flow (VC) waveforms [3].</td><td><span class="badge badge-green">COMMON</span></td></tr>
+        <tr><td><strong>d</strong></td><td>Dual</td><td>Switches between VC and PC within a single breath [3].</td><td><span class="badge badge-green">COMMON</span></td></tr>
+        <tr><td><strong>a</strong></td><td>Adaptive</td><td>Ventilator adjusts inspiratory pressure between breaths to achieve VT target [3].</td><td><span class="badge badge-green">COMMON</span></td></tr>
+        <tr><td><strong>o</strong></td><td>Optimal</td><td>Minimizes or maximizes overall performance [3].</td><td><span class="badge badge-amber">RARE</span></td></tr>
+        <tr><td><strong>i</strong></td><td>Intelligent</td><td>Uses AI: fuzzy logic, expert systems, neural networks [3].</td><td><span class="badge badge-amber">RARE</span></td></tr>
+      </table>
+      <div class="warn-box" style="margin-top:0.75rem">⚠️ Adaptive (a) work shifting: "As Pmus increases, Pvent will decrease in an attempt to maintain VT at target" [2]. "Severe work shifting in adaptive targeting should be addressed promptly" [2].</div>
+    </div>
+  </div>
+  <p class="cite">[2] Mireles-Cabodevila 2022 · [3] Chatburn 2014</p>
+</div>
+
+<!-- ==================== REHAB TAB ==================== -->
+<div class="tab-content" id="tab2">
+  <div class="card" style="border-left:3px solid var(--accent)">
+    <h3>💪 Rehab & Synchrony</h3>
+    <p style="font-size:0.85rem;color:var(--text2)">"There are only 3 goals of mechanical ventilation (safety, comfort, and liberation)" [2]. During rehab → comfort is primary (with safety maintained).</p>
+  </div>
+
+  <div class="sub-tabs rehab-sub-tabs">
+    <button class="sub-tab active" onclick="switchRehab(0)">Effort & Modes</button>
+    <button class="sub-tab" onclick="switchRehab(1)">Cycling</button>
+    <button class="sub-tab" onclick="switchRehab(2)">Dyssynchrony</button>
+    <button class="sub-tab" onclick="switchRehab(3)">Pre-Mobility</button>
+  </div>
+
+  <!-- COMBINED: Effort & Modes -->
+  <div class="rehab-sub-content active" id="rehab0">
+    <!-- Figure 7 SVG -->
+    <div class="card">
+      <h3>How Modes Respond to Increasing Patient Effort</h3>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Adapted from Figure 7, Mireles-Cabodevila et al. 2022 [2]</p>
+      <div class="chart-container">
+        <svg viewBox="0 0 460 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:480px;">
+          <line x1="80" y1="210" x2="420" y2="210" stroke="var(--text2)" stroke-width="1.5"/>
+          <line x1="80" y1="210" x2="80" y2="40" stroke="var(--text2)" stroke-width="1.5"/>
+          <text x="250" y="248" text-anchor="middle" font-size="13" fill="var(--text2)" font-weight="600">Pmus (patient effort) →</text>
+          <text x="28" y="125" text-anchor="middle" font-size="13" fill="var(--text2)" font-weight="600" transform="rotate(-90 28 125)">Pvent →</text>
+          <text x="85" y="225" font-size="11" fill="var(--text2)">0</text>
+          <text x="405" y="225" font-size="11" fill="var(--text2)">High</text>
+          <text x="60" y="214" font-size="11" fill="var(--text2)">0</text>
+          <text x="56" y="52" font-size="11" fill="var(--text2)">High</text>
+          <!-- Green flat line -->
+          <line x1="95" y1="120" x2="405" y2="120" stroke="#059669" stroke-width="4" stroke-linecap="round"/>
+          <!-- Red declining line -->
+          <line x1="95" y1="55" x2="405" y2="195" stroke="#dc2626" stroke-width="4" stroke-linecap="round"/>
+          <!-- Green label — left side, just below line -->
+          <text x="100" y="140" font-size="11" fill="#059669" font-weight="bold">PC-CMVs / PC-CSVs</text>
+          <!-- Red label — left side, above line start -->
+          <text x="100" y="48" font-size="11" fill="#dc2626" font-weight="bold">VC-CMVs / PC-CMVa (PRVC)</text>
+        </svg>
+      </div>
+      <div class="legend-item">● <span style="color:#059669;font-weight:600">Green (flat):</span> PC-CMVs / PC-CSVs — Pvent constant. Patient effort rewarded with more VT ✅</div>
+      <div class="legend-item">● <span style="color:#dc2626;font-weight:600">Red (declining):</span> VC-CMVs / PC-CMVa (PRVC) — Pvent↓ as Pmus↑. Work shifting occurs ❌</div>
+      <p style="font-size:0.82rem;color:var(--text2);margin-top:0.75rem">"Work shifting occurs whenever the Pvent decreases in presence of Pmus" [2].</p>
+    </div>
+
+    <!-- Work Shifting by Mode -->
+    <div class="card">
+      <h3>📊 Work Shifting by Mode</h3>
+      <div class="good-box">
+        <strong>✅ PC-CMVs / PC-CSVs — Effort Rewarded</strong><br>
+        <strong>What happens:</strong> Pvent constant. As Pmus↑ → VT↑, Flow↑ [2].<br>
+        <strong>Work:</strong> "Total work increases" but patient rewarded with more volume [2].<br>
+        <strong>Why good for rehab:</strong> Flow on demand. Consistent support. PC-CSVs is flow-cycled = "patient cycling" [3].
+      </div>
+      <div class="bad-box">
+        <strong>❌ VC-CMVs — Effort NOT Rewarded</strong><br>
+        <strong>What happens:</strong> "As Pmus↑, Pvent↓. Patient can't get more volume" [2].<br>
+        <strong>Severe:</strong> "Pvent decreases below baseline. Patient is doing work on the ventilator" [2]. "Severe work shifting is never appropriate" [2].<br>
+        <strong>⚠️</strong> Servo-U "Volume Control" ≠ VC-CMVs. Classified as VC-IMVd,d — dual targeting can switch from VC to PS within a breath [2].
+      </div>
+      <div class="warn-box">
+        <strong>⚠️ PC-CMVa (PRVC) — Vent Works AGAINST Effort</strong><br>
+        <strong>What happens:</strong> "As Pmus increases, Pvent will decrease in an attempt to maintain VT at target" [2].<br>
+        <strong>Severe:</strong> "Patient may be breathing at PEEP level with little assistance and larger VT than target" [2]. "Severe work shifting in adaptive targeting should be addressed promptly" [2].
+      </div>
+    </div>
+
+    <!-- Mode Comparison Table -->
+    <div class="card">
+      <h3>🏃 Mode Comparison for Active Patients</h3>
+      <table>
+        <tr><th>TAG</th><th>Name</th><th>Behavior</th><th></th></tr>
+        <tr><td>PC-CSVs</td><td>PSV</td><td>Flow-cycled, patient controls timing</td><td><span class="badge badge-green">✅ BEST</span></td></tr>
+        <tr><td>PC-CMVs</td><td>P-CMV</td><td>Consistent Pinsp, effort → more VT</td><td><span class="badge badge-green">✅ Good</span></td></tr>
+        <tr><td>VC-CMVs</td><td>Vol A/C</td><td>Fixed VT+flow. Flow starvation</td><td><span class="badge badge-red">❌ Avoid</span></td></tr>
+        <tr><td>PC-CMVa</td><td>PRVC</td><td>Adaptive ↓support during ↑effort</td><td><span class="badge badge-amber">⚠️ Counter</span></td></tr>
+        <tr><td>PC-IMVs,s</td><td>SIMV+PS</td><td>Mandatory=time-cycled, Spont=flow-cycled</td><td><span class="badge badge-amber">⚠️ Mixed</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cycling -->
+  <div class="rehab-sub-content" id="rehab1">
+    <div class="card">
+      <h3>⏱️ Why Cycling Matters</h3>
+      <div class="good-box">
+        <strong>Flow-Cycled (PC-CSVs)</strong><br>
+        Patient cycling — "rate of flow decay to cycle threshold determined by patient mechanics" [3]. Neural Ti ≈ Vent Ti → synchrony.
+      </div>
+      <div class="bad-box">
+        <strong>Time/Volume-Cycled (VC-CMVs)</strong><br>
+        Ventilator cycling — ends at preset regardless of patient. Mismatch → dyssynchrony.
+      </div>
+      <p style="font-size:0.82rem;color:var(--text2);margin-top:0.75rem">💡 Late cycle: "patient's neural Ti shorter than imposed Ti" [2].</p>
+      <p style="font-size:0.82rem;color:var(--text2)">💡 Early cycle: "patient's neural Ti longer than imposed Ti" [2].</p>
+    </div>
+  </div>
+
+  <!-- Dyssynchrony -->
+  <div class="rehab-sub-content" id="rehab2">
+    <div class="card">
+      <h3>🔍 Dyssynchrony Recognition</h3>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">"Patient-ventilator dyssynchrony...occurring in about one-third of patients" [4]. "Patients with greater numbers of dyssynchronies have poorer outcomes" [4].</p>
+      <h4>Trigger Phase</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">
+        <strong>Normal:</strong> Immediate pressurization [2].<br>
+        <strong>Late trigger:</strong> "Pressure drops below baseline > 100 ms before triggering" [2].<br>
+        <strong>False trigger:</strong> "Non-Pmus signal triggers inspiration" [2].
+      </p>
+      <h4>Inspiration — Work Shifting</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">
+        <strong>Normal:</strong> No major Pmus deformation [2].<br>
+        <strong>Work shifting:</strong> Pvent above baseline — may be acceptable [2].<br>
+        <strong>Severe:</strong> "Pressure drops below baseline (PEEP)" [2]. "Never appropriate" [2].
+      </p>
+      <h4>Cycle Phase</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">
+        <strong>Late cycle:</strong> "Zero flow with concomitant increase in airway pressure" [2].<br>
+        <strong>Early cycle:</strong> "Expiratory flow with evidence of inspiratory effort" [2].
+      </p>
+      <h4>Expiration</h4>
+      <p style="font-size:0.82rem;color:var(--text2)">
+        <strong>Normal:</strong> "Exponential decay of flow" [2].<br>
+        <strong>Expiratory work:</strong> "Flow deformed in negative direction" [2].
+      </p>
+    </div>
+  </div>
+
+  <!-- Pre-Mobility -->
+  <div class="rehab-sub-content" id="rehab3">
+    <div class="card">
+      <h3>📋 Pre-Mobility Checklist</h3>
+      <div class="good-box">✅ <strong>Mode:</strong> Switch to PC-CMVs or PC-CSVs if in VC-CMVs or PC-CMVa. Patient needs flow on demand.</div>
+      <p style="font-size:0.82rem;margin:0.4rem 0">💡 <strong>Trigger:</strong> Ensure flow trigger (1–3 L/min). "Flow triggering results in less effort" [2].</p>
+      <p style="font-size:0.82rem;margin:0.4rem 0">💡 <strong>PS level:</strong> Consider temporarily ↑ for mobility session.</p>
+      <div class="good-box">✅ <strong>FiO₂:</strong> Ensure adequate O₂ reserve. May need transient ↑FiO₂.</div>
+      <p style="font-size:0.82rem;margin:0.4rem 0">💡 <strong>Alarms:</strong> Adjust high VT and high V̇E alarms to accommodate increased volumes during exertion.</p>
+    </div>
+  </div>
+  <p class="cite">[2] Mireles-Cabodevila 2022 · [3] Chatburn 2014 · [4] Pham et al. 2017</p>
+</div>
+
+<!-- ==================== COMPARATOR TAB ==================== -->
+<div class="tab-content" id="tab3">
+  <div class="card">
+    <h3>🔀 Mode Comparator</h3>
+    <p style="font-size:0.85rem;color:var(--text2)">Select a mode on either ventilator — the closest match auto-selects on the other.</p>
+  </div>
+  <div class="comparator-grid">
+    <div class="comparator-col">
+      <label>🔵 Hamilton T1</label>
+      <select id="hamilton-select" onchange="comparatorChange('hamilton')">
+        <option value="">-- Select --</option>
+        <option value="VC-CMVs">(S)CMV</option>
+        <option value="PC-CMVs">P-CMV</option>
+        <option value="PC-CMVa">APV-CMV</option>
+        <option value="PC-CMVar">APV-CMV+TRC</option>
+        <option value="PC-CMVoi">INTELLiVENT-ASV</option>
+        <option value="VC-IMVs,s">SIMV</option>
+        <option value="PC-IMVs,s">P-SIMV</option>
+        <option value="PC-IMVa,s">APV-SIMV</option>
+        <option value="PC-IMVoi,oi">ASV</option>
+        <option value="PC-IMVs,s-duo">DuoPAP</option>
+        <option value="PC-IMVs,s-aprv">APRV</option>
+        <option value="PC-CSVs">Spontaneous</option>
+        <option value="PC-CSVr">Spont+TRC</option>
+      </select>
+    </div>
+    <div class="comparator-col">
+      <label>🟠 Servo-U</label>
+      <select id="servo-select" onchange="comparatorChange('servo')">
+        <option value="">-- Select --</option>
+        <option value="PC-CMVs">Pressure Control</option>
+        <option value="PC-CMVa">PRVC</option>
+        <option value="VC-IMVd,d">Volume Control</option>
+        <option value="PC-IMVs,s">SIMV(PC)</option>
+        <option value="PC-IMVs,s-bivent">Bi-Vent</option>
+        <option value="PC-IMVa,s">SIMV(PRVC)</option>
+        <option value="PC-IMVa,a">Automode(PRVC→VS)</option>
+        <option value="PC-CSVs">Pressure Support</option>
+        <option value="PC-CSVa">Volume Support</option>
+        <option value="PC-CSVr">NAVA</option>
+      </select>
+    </div>
+  </div>
+  <div class="card" id="comparison-result">
+    <h3>🔬 Comparison</h3>
+    <table class="comparison-table">
+      <tr><th></th><th>Hamilton</th><th>Servo-U</th></tr>
+      <tr><td><strong>CV</strong></td><td id="comp-h-cv">—</td><td id="comp-s-cv">—</td></tr>
+      <tr><td><strong>BS</strong></td><td id="comp-h-bs">—</td><td id="comp-s-bs">—</td></tr>
+      <tr><td><strong>TS1</strong></td><td id="comp-h-ts1">—</td><td id="comp-s-ts1">—</td></tr>
+      <tr><td><strong>TS2</strong></td><td id="comp-h-ts2">—</td><td id="comp-s-ts2">—</td></tr>
+      <tr><td><strong>TAG</strong></td><td id="comp-h-tag">—</td><td id="comp-s-tag">—</td></tr>
+      <tr><td><strong>IMV</strong></td><td id="comp-h-imv">—</td><td id="comp-s-imv">—</td></tr>
+    </table>
+    <div style="text-align:center;margin-top:1rem">
+      <button class="toggle-btn" onclick="resetComparator()">↺ Reset</button>
     </div>
   </div>
 </div>
 
-<div class="equiv-banner" id="equivBanner">
-  <div class="equiv-icon" id="equivIcon"></div>
-  <div class="equiv-text"  id="equivText"></div>
-</div>
+<!-- Dark mode toggle -->
+<button class="dark-toggle" onclick="toggleDark()" aria-label="Toggle dark mode">🌓</button>
 
-<div class="variety-section" id="varietySection" style="display:none;">
-  <div class="variety-header">
-    🔬 Variety Detail — 5th Taxonomy Level [1]
-    <span class="variety-tag-pill" id="varietyTagPill">—</span>
-  </div>
-  <div class="variety-body" id="varietyBody"></div>
-</div>
-
-<div class="compare-section">
-  <div class="compare-header">⚖️ Side-by-Side Comparison</div>
-  <div class="compare-body">
-    <div id="compareContent"><div class="empty-state">Select modes on both sides to compare.</div></div>
-  </div>
-</div>
-
-<div class="legend-section">
-  <div class="legend-header">📖 Targeting Scheme Reference</div>
-  <div class="legend-grid">
-    <div class="legend-card"><div class="legend-code">s</div><div class="legend-name">Set-point</div><div class="legend-desc">Operator sets all parameters</div></div>
-    <div class="legend-card"><div class="legend-code">d</div><div class="legend-name">Dual</div><div class="legend-desc">Switches VC↔PC within breath</div></div>
-    <div class="legend-card"><div class="legend-code">r</div><div class="legend-name">Servo</div><div class="legend-desc">Output follows varying input</div></div>
-    <div class="legend-card"><div class="legend-code">a</div><div class="legend-name">Adaptive</div><div class="legend-desc">Auto-adjusts P for V<sub>T</sub></div></div>
-    <div class="legend-card"><div class="legend-code">b</div><div class="legend-name">Bio-variable</div><div class="legend-desc">Randomly varies P or V<sub>T</sub></div></div>
-    <div class="legend-card"><div class="legend-code">o</div><div class="legend-name">Optimal</div><div class="legend-desc">Min/max performance goal</div></div>
-    <div class="legend-card"><div class="legend-code">i</div><div class="legend-name">Intelligent</div><div class="legend-desc">AI / fuzzy logic</div></div>
-  </div>
-</div>
-
-<div class="footnote">
-  [1] Chatburn RL, El-Khatib M, Mireles-Cabodevila E. Respir Care 2014;59(11):1747–1763<br>
-  Invasive modes only. For educational use only.
-</div>
 <script>
-const OPPOSITE_VENT={hamilton_t1:"maquet_servou",maquet_servou:"hamilton_t1"};
+// Main tabs
+function switchMain(idx) {
+  document.querySelectorAll('.main-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.tab-content').forEach((c,i) => c.classList.toggle('active', i===idx));
+}
 
-const MFR_EQUIV={
-  "hamilton_t1:maquet_servou":{
-    "Adaptive Pressure Ventilation (APV) CMV":"Pressure-Regulated Volume Control (PRVC)",
-    "Volume Support (VS)":"Volume Support",
-    "APRV":"BiVent",
-    "DuoPAP":"BiVent",
-    "Pressure Control CMV":"Pressure Control",
-    "Pressure SIMV":"SIMV (Pressure Control)",
-    "Spontaneous":"Spontaneous / CPAP",
-    "APV SIMV":"SIMV PRVC",
-    "Synchronized Controlled MV":"Volume Control",
-    "SIMV":"SIMV (Volume Control)",
-    "ASV (Adaptive Support Ventilation)":null,
-    "INTELLiVENT-ASV":null,
-  }
+// Sub tabs
+function switchSub(mainIdx, subIdx) {
+  const container = document.getElementById('tab'+mainIdx);
+  container.querySelectorAll('.sub-tab').forEach((t,i) => t.classList.toggle('active', i===subIdx));
+  container.querySelectorAll('.sub-content').forEach((c,i) => c.classList.toggle('active', i===subIdx));
+}
+
+// Rehab sub tabs
+function switchRehab(idx) {
+  document.querySelectorAll('.rehab-sub-tabs .sub-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.rehab-sub-content').forEach((c,i) => c.classList.toggle('active', i===idx));
+}
+
+// ABG toggle
+function toggleABG(btn, mode) {
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.abg-vc').forEach(el => el.style.display = mode==='vc' ? 'inline' : 'none');
+  document.querySelectorAll('.abg-pc').forEach(el => el.style.display = mode==='pc' ? 'inline' : 'none');
+}
+
+// Dark mode
+function toggleDark() {
+  const theme = document.documentElement.getAttribute('data-theme');
+  document.documentElement.setAttribute('data-theme', theme==='dark' ? 'light' : 'dark');
+}
+
+// Comparator
+const modeData = {
+  'VC-CMVs': {cv:'Volume',bs:'CMV',ts1:'Set-point',ts2:'—',tag:'VC-CMVs',imv:'—'},
+  'PC-CMVs': {cv:'Pressure',bs:'CMV',ts1:'Set-point',ts2:'—',tag:'PC-CMVs',imv:'—'},
+  'PC-CMVa': {cv:'Pressure',bs:'CMV',ts1:'Adaptive',ts2:'—',tag:'PC-CMVa',imv:'—'},
+  'PC-CMVar': {cv:'Pressure',bs:'CMV',ts1:'Adaptive+Servo',ts2:'—',tag:'PC-CMVar',imv:'—'},
+  'PC-CMVoi': {cv:'Pressure',bs:'CMV',ts1:'Optimal+Intelligent',ts2:'—',tag:'PC-CMVoi',imv:'—'},
+  'VC-IMVs,s': {cv:'Volume',bs:'IMV',ts1:'Set-point',ts2:'Set-point',tag:'VC-IMVs,s',imv:'Type 1'},
+  'VC-IMVd,d': {cv:'Volume',bs:'IMV',ts1:'Dual',ts2:'Dual',tag:'VC-IMVd,d',imv:'Type 4'},
+  'PC-IMVs,s': {cv:'Pressure',bs:'IMV',ts1:'Set-point',ts2:'Set-point',tag:'PC-IMVs,s',imv:'Type 1'},
+  'PC-IMVs,s-duo': {cv:'Pressure',bs:'IMV',ts1:'Set-point',ts2:'Set-point',tag:'PC-IMVs,s',imv:'Type 1'},
+  'PC-IMVs,s-aprv': {cv:'Pressure',bs:'IMV',ts1:'Set-point',ts2:'Set-point',tag:'PC-IMVs,s',imv:'Type 1'},
+  'PC-IMVs,s-bivent': {cv:'Pressure',bs:'IMV',ts1:'Set-point',ts2:'Set-point',tag:'PC-IMVs,s',imv:'Type 1'},
+  'PC-IMVa,s': {cv:'Pressure',bs:'IMV',ts1:'Adaptive',ts2:'Set-point',tag:'PC-IMVa,s',imv:'Type 1'},
+  'PC-IMVa,a': {cv:'Pressure',bs:'IMV',ts1:'Adaptive',ts2:'Adaptive',tag:'PC-IMVa,a',imv:'Type 2'},
+  'PC-IMVoi,oi': {cv:'Pressure',bs:'IMV',ts1:'Optimal+Intelligent',ts2:'Optimal+Intelligent',tag:'PC-IMVoi,oi',imv:'Type 3'},
+  'PC-CSVs': {cv:'Pressure',bs:'CSV',ts1:'Set-point',ts2:'—',tag:'PC-CSVs',imv:'—'},
+  'PC-CSVa': {cv:'Pressure',bs:'CSV',ts1:'Adaptive',ts2:'—',tag:'PC-CSVa',imv:'—'},
+  'PC-CSVr': {cv:'Pressure',bs:'CSV',ts1:'Servo',ts2:'—',tag:'PC-CSVr',imv:'—'},
 };
 
-const TAXON_MISMATCHES={
-  "Synchronized Controlled MV|Volume Control":{
-    explanation:`Hamilton lists <strong>(S)CMV → Volume Control</strong> as equivalent, but Chatburn taxonomy disagrees [1]:<br>
-      • Hamilton (S)CMV = <code>VC-CMVs</code> — every patient trigger → mandatory breath → CMV.<br>
-      • Servo-U Volume Control = <code>VC-IMVd,d</code> — if a 3 cmH₂O pressure drop is detected the ventilator switches to PS → some breaths become spontaneous → IMV, not CMV [1].<br>
-      <strong>Not taxonomically equivalent.</strong>`
-  },
-  "SIMV|SIMV (Volume Control)":{
-    explanation:`Hamilton lists <strong>SIMV → SIMV (Volume Control)</strong> as equivalent, but Chatburn taxonomy disagrees [1]:<br>
-      • Hamilton SIMV = <code>VC-IMVs,s</code> — set-point targeting for both breath types.<br>
-      • Servo-U SIMV (VC) = <code>VC-IMVd,d</code> — dual targeting for both breath types.<br>
-      <strong>Not taxonomically equivalent.</strong> [1]`
-  }
+// Auto-match mapping
+const hamiltonToServo = {
+  'VC-CMVs': 'VC-IMVd,d',
+  'PC-CMVs': 'PC-CMVs',
+  'PC-CMVa': 'PC-CMVa',
+  'PC-CMVar': 'PC-CMVa',
+  'PC-CMVoi': '',
+  'VC-IMVs,s': 'VC-IMVd,d',
+  'PC-IMVs,s': 'PC-IMVs,s',
+  'PC-IMVs,s-duo': 'PC-IMVs,s-bivent',
+  'PC-IMVs,s-aprv': 'PC-IMVs,s-bivent',
+  'PC-IMVa,s': 'PC-IMVa,s',
+  'PC-IMVoi,oi': '',
+  'PC-CSVs': 'PC-CSVs',
+  'PC-CSVr': 'PC-CSVr',
 };
 
-const VARIETIES={
-  "PC-IMVs,s":{
-    intro:`Five varieties share this tag [1]. Taxonomically equivalent but differ in operational implementation. Per Chatburn: <em>"Table 4 illustrates how modes that are essentially the same or very similar are given very different names."</em> [1]`,
-    diffDimensions:["P-high Duration","P-low / Te Duration","Spontaneous Breath Timing","Primary Clinical Use","Trigger / Cycle"],
-    varieties:[
-      {name:"Pressure SIMV",alias:"PSIMV+ / SIMV (PC)",vents:["hamilton_t1","maquet_servou"],ventLabels:["Hamilton T1","Maquet Servo-U"],diff:{"P-high Duration":"Short — conventional Ti (~0.8–1.2 s)","P-low / Te Duration":"Long — conventional Te (~2–4 s)","Spontaneous Breath Timing":"Between mandatory breaths only","Primary Clinical Use":"Partial support with set mandatory rate backup","Trigger / Cycle":"Time or patient-triggered; time or flow-cycled"}},
-      {name:"APRV",alias:"Airway Pressure Release Ventilation",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"P-high Duration":"Long — T-high 4–6 s or longer","P-low / Te Duration":"Very short — T-low 0.4–0.8 s (target ≥75% peak expiratory flow)","Spontaneous Breath Timing":"Predominantly at P-high; also possible at P-low","Primary Clinical Use":"Lung recruitment in ARDS; maximises mean airway pressure","Trigger / Cycle":"Time-triggered releases; synchronisation windows"}},
-      {name:"DuoPAP",alias:"Duo Positive Airway Pressure",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"P-high Duration":"Variable — intermediate between SIMV and APRV","P-low / Te Duration":"Variable — typically longer than APRV T-low","Spontaneous Breath Timing":"Permitted at both pressure levels throughout","Primary Clinical Use":"Spontaneous breathing augmentation; transition mode","Trigger / Cycle":"Time-triggered mandatory transitions; patient-triggered spontaneous at both levels"}},
-      {name:"BiVent",alias:"BiVent / APRV",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"P-high Duration":"Variable — operator-set; can replicate APRV or DuoPAP","P-low / Te Duration":"Variable — operator-set","Spontaneous Breath Timing":"Permitted at both pressure levels","Primary Clinical Use":"Lung recruitment and spontaneous breathing preservation","Trigger / Cycle":"Time-triggered mandatory transitions; patient-triggered spontaneous at both levels"}},
-      {name:"Automode (Pressure Control → Pressure Support)",alias:"Automode PC→PS",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"P-high Duration":"Conventional Ti in mandatory phase; auto-transitions to PS when effort detected","P-low / Te Duration":"Conventional Te in mandatory phase","Spontaneous Breath Timing":"Between mandatory breaths (IMV); all spontaneous once transitioned to PS","Primary Clinical Use":"Automatic weaning — transitions from PC to PS as patient effort recovers","Trigger / Cycle":"Time or patient-triggered mandatory; patient-triggered, flow-cycled in PS phase"}},
-    ]
-  },
-  "VC-IMVd,d":{
-    intro:`Two varieties share this tag on the Maquet Servo-U [1]. Both use dual targeting but differ in how mandatory rate interacts with patient effort.`,
-    diffDimensions:["Mandatory Rate Behaviour","Patient Trigger Effect","Spontaneous Breaths Between","Primary Use"],
-    varieties:[
-      {name:"Volume Control",alias:"VC",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Mandatory Rate Behaviour":"Set rate is minimum — every patient trigger produces a mandatory breath","Patient Trigger Effect":"Each trigger → mandatory VC breath; rate can exceed set rate","Spontaneous Breaths Between":"Only if dual targeting switches to PS within a breath","Primary Use":"Full or near-full support where VT delivery is prioritised"}},
-      {name:"SIMV (Volume Control)",alias:"SIMV (VC)",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Mandatory Rate Behaviour":"Set rate is maximum — triggers between windows → spontaneous breaths","Patient Trigger Effect":"Trigger in synchronisation window advances mandatory breath; between windows → spontaneous","Spontaneous Breaths Between":"Permitted between mandatory breaths","Primary Use":"Weaning — graduated reduction of mandatory support"}},
-    ]
-  },
-  "PC-CMVa":{
-    intro:`Two varieties share this tag — one on each ventilator. Both auto-adjust inspiratory pressure between breaths to achieve set VT (adaptive targeting) [1]. Named differently, taxonomically identical.`,
-    diffDimensions:["Proprietary Name","Pressure Step Limit","VT Comparison Method","Response to Increased Effort"],
-    varieties:[
-      {name:"Adaptive Pressure Ventilation (APV) CMV",alias:"APVcmv / (S)CMV+",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Proprietary Name":"APVcmv / (S)CMV+ — Hamilton Medical","Pressure Step Limit":"Up to 3 cmH₂O per breath","VT Comparison Method":"Running average of recent breaths vs. target VT","Response to Increased Effort":"Reduces pressure when effort raises VT above target"}},
-      {name:"Pressure-Regulated Volume Control (PRVC)",alias:"PRVC",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Proprietary Name":"PRVC — Maquet / Getinge","Pressure Step Limit":"Up to 3 cmH₂O per breath","VT Comparison Method":"Single previous breath VT vs. target","Response to Increased Effort":"Reduces pressure when effort raises VT above target"}},
-    ]
-  },
-  "PC-IMVa,s":{
-    intro:`Two varieties — APV SIMV (Hamilton T1) and SIMV PRVC (Servo-U). Both apply adaptive targeting to mandatory breaths and set-point to spontaneous breaths [1].`,
-    diffDimensions:["Proprietary Name","Mandatory Breath Adaptation","Spontaneous Breath Support"],
-    varieties:[
-      {name:"APV SIMV",alias:"APVsimv / SIMV+",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Proprietary Name":"APV SIMV / SIMV+ — Hamilton Medical","Mandatory Breath Adaptation":"Adaptive — running average to achieve set VT","Spontaneous Breath Support":"Set-point PS — operator sets PS level independently"}},
-      {name:"SIMV PRVC",alias:"SIMV (PRVC)",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Proprietary Name":"SIMV PRVC — Maquet / Getinge","Mandatory Breath Adaptation":"Adaptive — single-breath comparison to achieve set VT","Spontaneous Breath Support":"Set-point PS — operator sets PS level independently"}},
-    ]
-  },
-  "PC-CSVs":{
-    intro:`Three varieties share this tag. All are fully spontaneous (patient-triggered, patient-cycled) with set-point targeting [1].`,
-    diffDimensions:["Proprietary Name","Covers CPAP (PS=0)?","Covers PS (>0)?","Typical Application"],
-    varieties:[
-      {name:"Spontaneous",alias:"SPONT / CPAP",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Proprietary Name":"Spontaneous — Hamilton T1","Covers CPAP (PS=0)?":"Yes","Covers PS (>0)?":"Yes — single mode covers full PS range","Typical Application":"Invasive CPAP trials and PS support"}},
-      {name:"Spontaneous / CPAP",alias:"(PS) / CPAP",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Proprietary Name":"Spontaneous / CPAP — Maquet Servo-U","Covers CPAP (PS=0)?":"Yes","Covers PS (>0)?":"Yes","Typical Application":"Invasive CPAP trials and PS support"}},
-      {name:"Pressure Support",alias:"PS",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Proprietary Name":"Pressure Support — Maquet Servo-U (separate entry)","Covers CPAP (PS=0)?":"Typically no","Covers PS (>0)?":"Yes","Typical Application":"Partial ventilatory support and weaning"}},
-    ]
-  },
-  "PC-CSVr":{
-    intro:`Chatburn et al. use this as their primary variety example [1]: <em>"There are 3 varieties of PC-CSV using servo targeting..."</em> Only tube compensation (Hamilton T1) and NAVA (Servo-U) are on these two ventilators.`,
-    diffDimensions:["Input Signal","Proportionality","Load Supported","Availability"],
-    varieties:[
-      {name:"Spontaneous + Tube-Resistance Compensation",alias:"SPONT + TRC",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Input Signal":"Inspiratory flow (pressure ∝ flow²)","Proportionality":"Pressure ∝ flow² to overcome ETT/trach resistance","Load Supported":"Resistive load only","Availability":"Hamilton T1 only"}},
-      {name:"NAVA",alias:"Neurally Adjusted Ventilatory Assist",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Input Signal":"EAdi via nasogastric catheter electrode","Proportionality":"Pressure ∝ EAdi amplitude × NAVA level","Load Supported":"Both resistive and elastic loads","Availability":"Maquet Servo-U only"}},
-    ]
-  },
-  "PC-IMVoi,oi":{
-    intro:`Two varieties on the Hamilton T1. Both use optimal + intelligent targeting [1]. INTELLiVENT-ASV extends ASV with closed-loop PEEP and FiO₂.`,
-    diffDimensions:["Closed-loop Parameters","FiO₂ Control","PEEP Control","Automation Level"],
-    varieties:[
-      {name:"ASV (Adaptive Support Ventilation)",alias:"ASV",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Closed-loop Parameters":"Rate, VT, PS level (Otis equation to minimise WOB)","FiO₂ Control":"Manual","PEEP Control":"Manual","Automation Level":"High — automates ventilatory pattern only"}},
-      {name:"INTELLiVENT-ASV",alias:"INTELLiVENT-ASV",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Closed-loop Parameters":"Rate, VT, PS level, PEEP, and FiO₂","FiO₂ Control":"Automated — titrates to SpO₂ target","PEEP Control":"Automated — PEEP/FiO₂ table + lung mechanics","Automation Level":"Highest available — fully closed-loop"}},
-    ]
-  },
-  "PC-CSVa":{
-    intro:`One variety on each ventilator. Both use adaptive targeting to achieve set VT [1].`,
-    diffDimensions:["Proprietary Name","VT Measurement","Pressure Limits"],
-    varieties:[
-      {name:"Volume Support (VS)",alias:"VS",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Proprietary Name":"Volume Support (VS) — Hamilton Medical","VT Measurement":"Previous breath VT vs. target","Pressure Limits":"PEEP to operator-set upper pressure limit"}},
-      {name:"Volume Support",alias:"VS",vents:["maquet_servou"],ventLabels:["Maquet Servo-U"],diff:{"Proprietary Name":"Volume Support — Maquet / Getinge","VT Measurement":"Previous breath VT vs. target","Pressure Limits":"PEEP to operator-set upper pressure limit"}},
-    ]
-  },
-  "PC-IMVoir,oir":{
-    intro:`Two varieties on the Hamilton T1 — tube-resistance compensation variants of ASV and INTELLiVENT-ASV [1].`,
-    diffDimensions:["Base Mode","Added Servo Feature","Closed-loop Oxygenation"],
-    varieties:[
-      {name:"ASV + Tube-Resistance Compensation",alias:"ASV + TRC",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Base Mode":"ASV (optimal + intelligent)","Added Servo Feature":"Servo tube-resistance compensation on both breath types","Closed-loop Oxygenation":"No — FiO₂ and PEEP manual"}},
-      {name:"INTELLiVENT-ASV + Tube-Resistance Compensation",alias:"INTELLiVENT-ASV + TRC",vents:["hamilton_t1"],ventLabels:["Hamilton T1"],diff:{"Base Mode":"INTELLiVENT-ASV (optimal + intelligent + closed-loop PEEP/FiO₂)","Added Servo Feature":"Servo tube-resistance compensation on both breath types","Closed-loop Oxygenation":"Yes — automated FiO₂ and PEEP retained"}},
-    ]
-  },
+const servoToHamilton = {
+  'PC-CMVs': 'PC-CMVs',
+  'PC-CMVa': 'PC-CMVa',
+  'VC-IMVd,d': 'VC-CMVs',
+  'PC-IMVs,s': 'PC-IMVs,s',
+  'PC-IMVs,s-bivent': 'PC-IMVs,s-duo',
+  'PC-IMVa,s': 'PC-IMVa,s',
+  'PC-IMVa,a': 'PC-IMVa,s',
+  'PC-CSVs': 'PC-CSVs',
+  'PC-CSVa': 'PC-CSVs',
+  'PC-CSVr': 'PC-CSVr',
 };
 
-const VENTS={
-  hamilton_t1:{label:"Hamilton Medical T1",modes:[
-    {name:"Synchronized Controlled MV",alias:"(S)CMV",tag:"VC-CMVs",cv:"Volume (VC)",bs:"CMV",pt:"Set-point (s)",st:"—",notes:"Classic volume assist-control. Every patient trigger → mandatory breath. ⚠️ Maquet 'Volume Control' is NOT taxonomically equivalent [1]."},
-    {name:"SIMV",alias:"SIMV / (S)IMV",tag:"VC-IMVs,s",cv:"Volume (VC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Mandatory VC breaths; spontaneous PS breaths between. ⚠️ Maquet SIMV (VC) uses dual targeting → not equivalent [1]."},
-    {name:"SIMV + Tube-Resistance Compensation",alias:"SIMV + TRC",tag:"VC-IMVs,sr",cv:"Volume (VC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point + Servo (sr)",notes:"VC-SIMV with servo tube-resistance compensation on spontaneous breaths."},
-    {name:"Pressure Control CMV",alias:"PCV+ / P-CMV",tag:"PC-CMVs",cv:"Pressure (PC)",bs:"CMV",pt:"Set-point (s)",st:"—",notes:"Classic PC assist-control. Equivalent to Pressure Control on Servo-U [1]."},
-    {name:"Pressure Control CMV + Tube-Resistance Compensation",alias:"PCV+ + TRC",tag:"PC-CMVsr",cv:"Pressure (PC)",bs:"CMV",pt:"Set-point + Servo (sr)",st:"—",notes:"PC-CMV with servo tube-resistance compensation."},
-    {name:"Adaptive Pressure Ventilation (APV) CMV",alias:"APVcmv / (S)CMV+",tag:"PC-CMVa",cv:"Pressure (PC)",bs:"CMV",pt:"Adaptive (a)",st:"—",notes:"Auto-adjusts pressure breath-to-breath to achieve set VT. Taxonomically identical to PRVC on Servo-U [1]."},
-    {name:"APV CMV + Tube-Resistance Compensation",alias:"APVcmv + TRC",tag:"PC-CMVar",cv:"Pressure (PC)",bs:"CMV",pt:"Adaptive + Servo (ar)",st:"—",notes:"APV CMV with servo tube-resistance compensation."},
-    {name:"Pressure SIMV",alias:"PSIMV+ / P-SIMV",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Standard PC-SIMV. Equivalent to SIMV (Pressure Control) on Servo-U [1]."},
-    {name:"APRV",alias:"APRV",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Long T-high, brief T-low. Equivalent to BiVent on Servo-U [1]. See variety detail."},
-    {name:"DuoPAP",alias:"DuoPAP",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Two-level pressure; spontaneous at both levels. Equivalent to BiVent on Servo-U [1]. See variety detail."},
-    {name:"Pressure SIMV + Tube-Resistance Compensation",alias:"PSIMV+ + TRC",tag:"PC-IMVsr,sr",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point + Servo (sr)",st:"Set-point + Servo (sr)",notes:"PC-SIMV with servo tube-resistance compensation on both breath types."},
-    {name:"APRV + Tube-Resistance Compensation",alias:"APRV + TRC",tag:"PC-IMVsr,sr",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point + Servo (sr)",st:"Set-point + Servo (sr)",notes:"APRV with servo tube-resistance compensation."},
-    {name:"APV SIMV",alias:"APVsimv / SIMV+",tag:"PC-IMVa,s",cv:"Pressure (PC)",bs:"IMV",pt:"Adaptive (a)",st:"Set-point (s)",notes:"Adaptive mandatory + set-point PS. Equivalent to SIMV PRVC on Servo-U [1]."},
-    {name:"APV SIMV + Tube-Resistance Compensation",alias:"APVsimv + TRC",tag:"PC-IMVar,sr",cv:"Pressure (PC)",bs:"IMV",pt:"Adaptive + Servo (ar)",st:"Set-point + Servo (sr)",notes:"APV SIMV with tube-resistance compensation on both breath types."},
-    {name:"ASV (Adaptive Support Ventilation)",alias:"ASV",tag:"PC-IMVoi,oi",cv:"Pressure (PC)",bs:"IMV",pt:"Optimal + Intelligent (oi)",st:"Optimal + Intelligent (oi)",notes:"Otis equation to minimise WOB + intelligent adjustments [1]. No equivalent on Servo-U. See variety detail."},
-    {name:"INTELLiVENT-ASV",alias:"INTELLiVENT-ASV",tag:"PC-IMVoi,oi",cv:"Pressure (PC)",bs:"IMV",pt:"Optimal + Intelligent (oi)",st:"Optimal + Intelligent (oi)",notes:"ASV + closed-loop PEEP and FiO₂. No equivalent on Servo-U [1]. See variety detail."},
-    {name:"ASV + Tube-Resistance Compensation",alias:"ASV + TRC",tag:"PC-IMVoir,oir",cv:"Pressure (PC)",bs:"IMV",pt:"Optimal + Intelligent + Servo (oir)",st:"Optimal + Intelligent + Servo (oir)",notes:"ASV with servo tube-resistance compensation."},
-    {name:"INTELLiVENT-ASV + Tube-Resistance Compensation",alias:"INTELLiVENT-ASV + TRC",tag:"PC-IMVoir,oir",cv:"Pressure (PC)",bs:"IMV",pt:"Optimal + Intelligent + Servo (oir)",st:"Optimal + Intelligent + Servo (oir)",notes:"INTELLiVENT-ASV with tube-resistance compensation."},
-    {name:"Spontaneous",alias:"SPONT / CPAP",tag:"PC-CSVs",cv:"Pressure (PC)",bs:"CSV",pt:"Set-point (s)",st:"—",notes:"CPAP or PS via invasive airway. Equivalent to Spontaneous/CPAP and PS on Servo-U [1]."},
-    {name:"Spontaneous + Tube-Resistance Compensation",alias:"SPONT + TRC",tag:"PC-CSVr",cv:"Pressure (PC)",bs:"CSV",pt:"Servo (r)",st:"—",notes:"One of 3 varieties of PC-CSVr per Chatburn [1] — servo ∝ flow² to compensate ETT resistance."},
-    {name:"Volume Support (VS)",alias:"VS",tag:"PC-CSVa",cv:"Pressure (PC)",bs:"CSV",pt:"Adaptive (a)",st:"—",notes:"Adaptive PS to achieve set VT. Equivalent to Volume Support on Servo-U [1]."},
-  ]},
-  maquet_servou:{label:"Maquet Servo-U",modes:[
-    {name:"Volume Control",alias:"VC",tag:"VC-IMVd,d",cv:"Volume (VC)",bs:"IMV",pt:"Dual (d)",st:"Dual (d)",notes:"Dual targeting — switches to PS if 3 cmH₂O pressure drop detected → some breaths spontaneous → IMV [1]. NOT equivalent to Hamilton (S)CMV."},
-    {name:"SIMV (Volume Control)",alias:"SIMV (VC)",tag:"VC-IMVd,d",cv:"Volume (VC)",bs:"IMV",pt:"Dual (d)",st:"Dual (d)",notes:"Explicit VC-SIMV with dual targeting. NOT equivalent to Hamilton SIMV (VC-IMVs,s) [1]."},
-    {name:"Automode (Volume Control → Volume Support)",alias:"Automode VC→VS",tag:"VC-IMVd,a",cv:"Volume (VC)",bs:"IMV",pt:"Dual (d)",st:"Adaptive (a)",notes:"Switches from VC mandatory to adaptive Volume Support when patient effort detected."},
-    {name:"Pressure Control",alias:"PC",tag:"PC-CMVs",cv:"Pressure (PC)",bs:"CMV",pt:"Set-point (s)",st:"—",notes:"Classic PC assist-control. Equivalent to Pressure Control CMV on Hamilton T1 [1]."},
-    {name:"Pressure-Regulated Volume Control (PRVC)",alias:"PRVC",tag:"PC-CMVa",cv:"Pressure (PC)",bs:"CMV",pt:"Adaptive (a)",st:"—",notes:"Auto-adjusts pressure to achieve set VT. Taxonomically identical to APV CMV on Hamilton T1 [1]."},
-    {name:"SIMV (Pressure Control)",alias:"SIMV (PC) + PS",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Standard PC-SIMV. Equivalent to Pressure SIMV on Hamilton T1 [1]."},
-    {name:"BiVent",alias:"BiVent / APRV",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Two-level pressure mode. Equivalent to APRV / DuoPAP on Hamilton T1 [1]. See variety detail."},
-    {name:"Automode (Pressure Control → Pressure Support)",alias:"Automode PC→PS",tag:"PC-IMVs,s",cv:"Pressure (PC)",bs:"IMV",pt:"Set-point (s)",st:"Set-point (s)",notes:"Auto-transitions from PC mandatory to PS when effort detected."},
-    {name:"SIMV PRVC",alias:"SIMV (PRVC)",tag:"PC-IMVa,s",cv:"Pressure (PC)",bs:"IMV",pt:"Adaptive (a)",st:"Set-point (s)",notes:"Adaptive mandatory + set-point PS. Equivalent to APV SIMV on Hamilton T1 [1]."},
-    {name:"Automode (PRVC → Volume Support)",alias:"Automode PRVC→VS",tag:"PC-IMVa,a",cv:"Pressure (PC)",bs:"IMV",pt:"Adaptive (a)",st:"Adaptive (a)",notes:"Both mandatory (PRVC) and spontaneous (VS) use adaptive targeting."},
-    {name:"Spontaneous / CPAP",alias:"(PS) / CPAP",tag:"PC-CSVs",cv:"Pressure (PC)",bs:"CSV",pt:"Set-point (s)",st:"—",notes:"All breaths patient-triggered and patient-cycled. Equivalent to Spontaneous on Hamilton T1 [1]."},
-    {name:"Pressure Support",alias:"PS",tag:"PC-CSVs",cv:"Pressure (PC)",bs:"CSV",pt:"Set-point (s)",st:"—",notes:"Classic invasive PS. Equivalent to Spontaneous on Hamilton T1 [1]."},
-    {name:"NAVA",alias:"NAVA",tag:"PC-CSVr",cv:"Pressure (PC)",bs:"CSV",pt:"Servo (r)",st:"—",notes:"Pressure ∝ EAdi. One of 3 varieties of PC-CSVr per Chatburn [1]. Not available on Hamilton T1."},
-    {name:"Volume Support",alias:"VS",tag:"PC-CSVa",cv:"Pressure (PC)",bs:"CSV",pt:"Adaptive (a)",st:"—",notes:"Adaptive PS to achieve set VT. Equivalent to Volume Support (VS) on Hamilton T1 [1]."},
-  ]}
-};
+function comparatorChange(source) {
+  const hSel = document.getElementById('hamilton-select');
+  const sSel = document.getElementById('servo-select');
 
-let selectedMode={A:null,B:null};
-let modeAutoMatched={A:false,B:false};
-let ventAutoSelected={A:false,B:false};
-let _suppressMatch=false;
-
-function getVentKey(side){return document.getElementById('vent'+side).value;}
-function getVentLabel(side){const k=getVentKey(side);return k&&VENTS[k]?VENTS[k].label:'Vent '+side;}
-function getModeSelect(side){return document.getElementById('mode'+side);}
-function findMatchingIndices(ventKey,targetTag){
-  if(!ventKey||!VENTS[ventKey])return[];
-  return VENTS[ventKey].modes.map((m,i)=>({idx:i,mode:m})).filter(({mode})=>mode.tag===targetTag);
-}
-function getMfrEquivCheck(mA,mB,vAKey,vBKey){
-  if(!mA||!mB)return null;
-  const table=MFR_EQUIV[`${vAKey}:${vBKey}`]||MFR_EQUIV[`${vBKey}:${vAKey}`];
-  if(!table)return null;
-  const mismatch=TAXON_MISMATCHES[`${mA.name}|${mB.name}`]||TAXON_MISMATCHES[`${mB.name}|${mA.name}`];
-  return{claimedBFromA:table[mA.name],claimedAFromB:table[mB.name],taxonomyMatch:mA.tag===mB.tag,mismatch};
-}
-function getDiffSummary(mA,mB){
-  const p=[];
-  if(mA.cv!==mB.cv)p.push('control variable');
-  if(mA.bs!==mB.bs)p.push('breath sequence');
-  if(mA.pt!==mB.pt)p.push('primary targeting');
-  if(mA.st!==mB.st)p.push('secondary targeting');
-  return p.length?p.join(', '):'overall classification';
-}
-
-function populateModes(side,ventKey){
-  const sel=getModeSelect(side);
-  while(sel.options.length>0){sel.remove(0);}
-  sel.classList.remove('matched-mode','matched-vent','no-match');
-  if(!ventKey||!VENTS[ventKey]){
-    const opt=document.createElement('option');
-    opt.value='';opt.textContent='-- Choose a ventilator first --';
-    sel.appendChild(opt);sel.classList.add('visually-disabled');return;
+  if (source === 'hamilton' && hSel.value) {
+    const match = hamiltonToServo[hSel.value];
+    if (match !== undefined) sSel.value = match;
+  } else if (source === 'servo' && sSel.value) {
+    const match = servoToHamilton[sSel.value];
+    if (match !== undefined) hSel.value = match;
   }
-  sel.classList.remove('visually-disabled');
-  const ph=document.createElement('option');ph.value='';ph.textContent='-- Choose Mode --';sel.appendChild(ph);
-  VENTS[ventKey].modes.forEach((m,idx)=>{
-    const opt=document.createElement('option');
-    opt.value=String(idx);
-    opt.textContent=m.name+(m.alias?' ('+m.alias+')':'')+' ['+m.tag+']';
-    sel.appendChild(opt);
-  });
-  sel.value='';
+
+  updateComparison();
 }
 
-function onVentChange(side){
-  const ventKey=getVentKey(side);const other=side==='A'?'B':'A';
-  selectedMode[side]=null;modeAutoMatched[side]=false;ventAutoSelected[side]=false;
-  ['A','B'].forEach(s=>{
-    document.getElementById('ventBadge'+s).classList.remove('visible');
-    document.getElementById('modeBadge'+s).classList.remove('visible');
-  });
-  populateModes(side,ventKey);clearPanel(side);hideMfrNote(side);
-  if(ventKey&&OPPOSITE_VENT[ventKey]){
-    const oppKey=OPPOSITE_VENT[ventKey];
-    const otherVentSel=document.getElementById('vent'+other);
-    const otherCur=getVentKey(other);
-    if(!otherCur||otherCur===oppKey){
-      _suppressMatch=true;
-      otherVentSel.value=oppKey;otherVentSel.classList.add('matched-vent');
-      ventAutoSelected[other]=true;
-      document.getElementById('ventBadge'+other).classList.add('visible');
-      selectedMode[other]=null;modeAutoMatched[other]=false;
-      populateModes(other,oppKey);clearPanel(other);hideMfrNote(other);
-      _suppressMatch=false;
-    }
-    if(selectedMode[other]&&!_suppressMatch){
-      _suppressMatch=true;autoMatchMode(side,selectedMode[other].tag);_suppressMatch=false;
-    }
-  }else if(!ventKey){
-    if(ventAutoSelected[other]){
-      document.getElementById('vent'+other).value='';
-      document.getElementById('vent'+other).classList.remove('matched-vent');
-      ventAutoSelected[other]=false;
-      document.getElementById('ventBadge'+other).classList.remove('visible');
-      selectedMode[other]=null;modeAutoMatched[other]=false;
-      populateModes(other,'');clearPanel(other);hideMfrNote(other);
-    }
-  }
-  updateVarietyPanel();updateEquivBanner();updateCompare();
+function updateComparison() {
+  const hVal = document.getElementById('hamilton-select').value;
+  const sVal = document.getElementById('servo-select').value;
+  const hData = modeData[hVal] || {cv:'—',bs:'—',ts1:'—',ts2:'—',tag:'—',imv:'—'};
+  const sData = modeData[sVal] || {cv:'—',bs:'—',ts1:'—',ts2:'—',tag:'—',imv:'—'};
+
+  document.getElementById('comp-h-cv').textContent = hData.cv;
+  document.getElementById('comp-s-cv').textContent = sData.cv;
+  document.getElementById('comp-h-bs').textContent = hData.bs;
+  document.getElementById('comp-s-bs').textContent = sData.bs;
+  document.getElementById('comp-h-ts1').textContent = hData.ts1;
+  document.getElementById('comp-s-ts1').textContent = sData.ts1;
+  document.getElementById('comp-h-ts2').textContent = hData.ts2;
+  document.getElementById('comp-s-ts2').textContent = sData.ts2;
+  document.getElementById('comp-h-tag').textContent = hData.tag;
+  document.getElementById('comp-s-tag').textContent = sData.tag;
+  document.getElementById('comp-h-imv').textContent = hData.imv;
+  document.getElementById('comp-s-imv').textContent = sData.imv;
 }
 
-function onModeChange(side){
-  const ventKey=getVentKey(side);
-  const sel=getModeSelect(side);const modeIdx=sel.value;
-  sel.classList.remove('matched-mode','no-match');
-  modeAutoMatched[side]=false;
-  document.getElementById('modeBadge'+side).classList.remove('visible');
-  hideMfrNote(side);
-  if(ventKey&&modeIdx!==''){
-    selectedMode[side]=VENTS[ventKey].modes[parseInt(modeIdx,10)];
-    renderPanel(side,selectedMode[side],VENTS[ventKey].label);
-    if(!_suppressMatch){
-      const other=side==='A'?'B':'A';
-      if(getVentKey(other)){
-        _suppressMatch=true;autoMatchMode(other,selectedMode[side].tag);_suppressMatch=false;
-      }
-    }
-  }else{selectedMode[side]=null;clearPanel(side);}
-  checkMfrNotes();updateVarietyPanel();updateEquivBanner();updateCompare();
+function resetComparator() {
+  document.getElementById('hamilton-select').value = '';
+  document.getElementById('servo-select').value = '';
+  updateComparison();
 }
-
-function autoMatchMode(side,targetTag){
-  const ventKey=getVentKey(side);if(!ventKey)return;
-  populateModes(side,ventKey);
-  const matches=findMatchingIndices(ventKey,targetTag);
-  const sel=getModeSelect(side);
-  const badge=document.getElementById('modeBadge'+side);
-  if(matches.length===0){
-    sel.classList.add('no-match');badge.classList.remove('visible');
-    selectedMode[side]=null;modeAutoMatched[side]=false;clearPanel(side);
-  }else{
-    let bestMatch=matches[0];
-    if(matches.length>1){
-      const other=side==='A'?'B':'A';
-      const otherMode=selectedMode[other];const otherVentKey=getVentKey(other);
-      if(otherMode&&otherVentKey){
-        const fwdTable=MFR_EQUIV[`${otherVentKey}:${ventKey}`];
-        const revTable=MFR_EQUIV[`${ventKey}:${otherVentKey}`];
-        let mfrTargetName=null;
-        if(fwdTable&&fwdTable[otherMode.name])mfrTargetName=fwdTable[otherMode.name];
-        if(!mfrTargetName&&revTable){
-          mfrTargetName=Object.entries(revTable).find(([k,v])=>v===otherMode.name)?.[0]||null;
-        }
-        if(mfrTargetName){const mfrMatch=matches.find(({mode})=>mode.name===mfrTargetName);if(mfrMatch)bestMatch=mfrMatch;}
-      }
-    }
-    sel.value=String(bestMatch.idx);sel.classList.add('matched-mode');
-    badge.classList.add('visible');
-    selectedMode[side]=bestMatch.mode;modeAutoMatched[side]=true;
-    renderPanel(side,selectedMode[side],VENTS[ventKey].label);
-  }
-  checkMfrNotes();updateVarietyPanel();updateEquivBanner();updateCompare();
-}
-
-function checkMfrNotes(){
-  hideMfrNote('A');hideMfrNote('B');
-  const mA=selectedMode.A,mB=selectedMode.B;if(!mA||!mB)return;
-  const check=getMfrEquivCheck(mA,mB,getVentKey('A'),getVentKey('B'));
-  if(!check||!check.mismatch)return;
-  const html=`⚠️ <strong>Manufacturer vs. Taxonomy Discrepancy:</strong><br>${check.mismatch.explanation}`;
-  showMfrNote('A',html);showMfrNote('B',html);
-}
-function showMfrNote(side,html){const el=document.getElementById('mfrNote'+side);el.innerHTML=html;el.classList.add('show');}
-function hideMfrNote(side){const el=document.getElementById('mfrNote'+side);el.innerHTML='';el.classList.remove('show');}
-
-function renderPanel(side,mode,ventLabel){
-  document.getElementById('tagValue'+side).textContent=mode.tag;
-  const rows=[
-    {key:'Ventilator',val:ventLabel,mono:false},
-    {key:'Mode Name',val:mode.name,mono:false},
-    {key:'Also Known As',val:mode.alias||'—',mono:false},
-    {key:'Control Variable',val:mode.cv,mono:false},
-    {key:'Breath Sequence',val:mode.bs,mono:true},
-    {key:'Primary Targeting',val:mode.pt,mono:false},
-    {key:'Secondary Targeting',val:mode.st,mono:false},
-    {key:'Mode Tag',val:mode.tag,mono:true},
-    {key:'Clinical Notes',val:mode.notes,mono:false},
-  ];
-  let html='';
-  rows.forEach(r=>{html+=`<div class="breakdown-row"><div class="breakdown-key">${r.key}</div><div class="breakdown-val ${r.mono?'mono':''}">${r.val}</div></div>`;});
-  document.getElementById('breakdown'+side).innerHTML=html;
-}
-function clearPanel(side){
-  document.getElementById('tagValue'+side).textContent='—';
-  document.getElementById('breakdown'+side).innerHTML='<div class="empty-state">Select a ventilator and mode above.</div>';
-}
-
-function updateVarietyPanel(){
-  const mA=selectedMode.A,mB=selectedMode.B;
-  const sec=document.getElementById('varietySection');
-  const body=document.getElementById('varietyBody');
-  const pill=document.getElementById('varietyTagPill');
-  let tag=null;
-  if(mA&&mB&&mA.tag===mB.tag&&VARIETIES[mA.tag])tag=mA.tag;
-  else if(mA&&VARIETIES[mA.tag])tag=mA.tag;
-  else if(mB&&VARIETIES[mB.tag])tag=mB.tag;
-  if(!tag){sec.style.display='none';return;}
-  const data=VARIETIES[tag];
-  const activeAName=mA?mA.name:null;const activeBName=mB?mB.name:null;
-  const count=data.varieties.length;
-  const cols=count<=2?'cols-2':(count<=3?'cols-3':(count<=4?'cols-4':'cols-5'));
-  sec.style.display='block';pill.textContent=tag;
-  let html=`<div class="variety-intro">${data.intro}</div><div class="variety-grid ${cols}">`;
-  data.varieties.forEach(v=>{
-    const isA=activeAName===v.name,isB=activeBName===v.name,isBoth=isA&&isB;
-    const cardCls=isBoth?'active-both':(isA?'active-a':(isB?'active-b':''));
-    const indHtml=isBoth?`<span class="variety-indicator ind-both">🔵A+🟠B</span>`:(isA?`<span class="variety-indicator ind-a">🔵 A</span>`:(isB?`<span class="variety-indicator ind-b">🟠 B</span>`:''));
-    html+=`<div class="variety-card ${cardCls}"><div class="variety-card-header"><span>${v.name}</span>${indHtml}</div><div class="variety-card-body"><em style="font-size:9px;color:#888;">${v.alias} | ${v.ventLabels.join(' / ')}</em><br><br>`;
-    Object.entries(v.diff).forEach(([dim,val])=>{html+=`<strong>${dim}:</strong> ${val}<br>`;});
-    html+=`</div></div>`;
-  });
-  html+=`</div>`;
-  if(data.varieties.length>=2&&data.diffDimensions){
-    html+=`<div class="variety-diff-row"><div class="variety-diff-header">📊 Variety Comparison Table</div><table class="variety-diff-table"><tr><th style="width:120px">Dimension</th>`;
-    data.varieties.forEach(v=>{html+=`<th>${v.name}</th>`;});html+=`</tr>`;
-    data.diffDimensions.forEach(dim=>{
-      html+=`<tr><td><strong>${dim}</strong></td>`;
-      data.varieties.forEach(v=>{html+=`<td>${v.diff[dim]||'—'}</td>`;});
-      html+=`</tr>`;
-    });
-    html+=`</table></div>`;
-  }
-  body.innerHTML=html;
-}
-
-function updateEquivBanner(){
-  const banner=document.getElementById('equivBanner');
-  const icon=document.getElementById('equivIcon');
-  const text=document.getElementById('equivText');
-  const mA=selectedMode.A,mB=selectedMode.B;
-  const vAKey=getVentKey('A'),vBKey=getVentKey('B');
-  if(mA&&mB){
-    const check=getMfrEquivCheck(mA,mB,vAKey,vBKey);
-    const mfrMismatch=check&&check.mismatch;
-    if(mA.tag===mB.tag){
-      const varData=VARIETIES[mA.tag];const sameMode=mA.name===mB.name;
-      const vNote=(varData&&!sameMode)?` <em style="font-size:10px;">(Same tag — different varieties. See 🔬 Variety Detail below [1].)</em>`:'';
-      banner.className='equiv-banner show match';icon.textContent='✅';
-      text.innerHTML=`<strong>Taxonomically Equivalent</strong> &nbsp;<code>${mA.tag}</code><br><b>${getVentLabel('A')} → ${mA.name}</b> and <b>${getVentLabel('B')} → ${mB.name}</b> share the same taxonomy tag [1].${vNote}`;
-    }else if(mfrMismatch){
-      banner.className='equiv-banner show taxonomy-diff';icon.textContent='⚠️';
-      text.innerHTML=`<strong>Manufacturer claims equivalence — Taxonomy disagrees [1].</strong><br><code>${mA.tag}</code> vs <code>${mB.tag}</code>. See warning boxes for explanation.`;
-    }else{
-      banner.className='equiv-banner show no-match';icon.textContent='ℹ️';
-      text.innerHTML=`<strong>Not Taxonomically Equivalent.</strong> &nbsp;<code>${mA.tag}</code> vs <code>${mB.tag}</code><br>Differences: ${getDiffSummary(mA,mB)}.`;
-    }
-    return;
-  }
-  if(mA&&vBKey&&!mB){
-    const matches=findMatchingIndices(vBKey,mA.tag);
-    if(matches.length===0){banner.className='equiv-banner show no-match';icon.textContent='⚠️';text.innerHTML=`<strong>No equivalent mode</strong> for <code>${mA.tag}</code> on <b>${VENTS[vBKey].label}</b>.<br><em>${mA.name}</em> has no equivalent on this ventilator [1].`;}
-    else{banner.className='equiv-banner show multi';icon.textContent='🔄';text.innerHTML=buildMultiChipHtml('B',mA.tag,matches,vBKey);}
-    return;
-  }
-  if(mB&&vAKey&&!mA){
-    const matches=findMatchingIndices(vAKey,mB.tag);
-    if(matches.length===0){banner.className='equiv-banner show no-match';icon.textContent='⚠️';text.innerHTML=`<strong>No equivalent mode</strong> for <code>${mB.tag}</code> on <b>${VENTS[vAKey].label}</b>.<br><em>${mB.name}</em> has no equivalent on this ventilator [1].`;}
-    else{banner.className='equiv-banner show multi';icon.textContent='🔄';text.innerHTML=buildMultiChipHtml('A',mB.tag,matches,vAKey);}
-    return;
-  }
-  banner.className='equiv-banner';
-}
-
-function buildMultiChipHtml(side,tag,matches,ventKey){
-  const ventLabel=VENTS[ventKey].label;const varData=VARIETIES[tag];
-  let html=`<strong>${matches.length} equivalent mode${matches.length>1?'s':''} found</strong> for <code>${tag}</code> on <b>${ventLabel}</b>`;
-  if(varData)html+=` <em style="font-size:10px;">(${matches.length} varieties — see 🔬 panel below)</em>`;
-  html+=`:<br><div class="multi-match-list">`;
-  matches.forEach(({idx,mode})=>{
-    const sel=(modeAutoMatched[side]&&selectedMode[side]&&selectedMode[side].name===mode.name)?'selected':'';
-    html+=`<span class="multi-match-chip ${sel}" data-side="${side}" data-idx="${idx}">${mode.name}</span>`;
-  });
-  html+=`</div><small style="color:#555;margin-top:4px;display:block;">Tap a chip to select a specific variety on ${ventLabel}.</small>`;
-  return html;
-}
-
-function selectChip(side,idx){
-  const ventKey=getVentKey(side);
-  populateModes(side,ventKey);
-  const sel=getModeSelect(side);
-  sel.value=String(idx);sel.classList.add('matched-mode');sel.classList.remove('no-match');
-  document.getElementById('modeBadge'+side).classList.add('visible');
-  selectedMode[side]=VENTS[ventKey].modes[idx];modeAutoMatched[side]=true;
-  renderPanel(side,selectedMode[side],VENTS[ventKey].label);
-  checkMfrNotes();updateVarietyPanel();updateEquivBanner();updateCompare();
-}
-
-function updateCompare(){
-  const mA=selectedMode.A,mB=selectedMode.B;
-  if(!mA||!mB){document.getElementById('compareContent').innerHTML='<div class="empty-state">Select modes on both sides to compare.</div>';return;}
-  const vAKey=getVentKey('A'),vBKey=getVentKey('B');
-  const check=getMfrEquivCheck(mA,mB,vAKey,vBKey);
-  const hasMfrClaim=check&&(check.claimedBFromA!==undefined||check.claimedAFromB!==undefined);
-  const mfrMismatch=check&&check.mismatch;
-  const rows=[
-    {key:'Mode Name',a:mA.name,b:mB.name,compare:false},
-    {key:'Also Known As',a:mA.alias||'—',b:mB.alias||'—',compare:false},
-    {key:'Mode Tag',a:mA.tag,b:mB.tag,compare:true,mono:true},
-    {key:'Control Variable',a:mA.cv,b:mB.cv,compare:true},
-    {key:'Breath Sequence',a:mA.bs,b:mB.bs,compare:true,mono:true},
-    {key:'Primary Targeting',a:mA.pt,b:mB.pt,compare:true},
-    {key:'Secondary Targeting',a:mA.st,b:mB.st,compare:true},
-  ];
-  let html=`<div class="compare-table-wrap"><table class="compare-table"><tr><th style="width:120px">Parameter</th><th>🔵 ${getVentLabel('A')}: ${mA.name}</th><th>🟠 ${getVentLabel('B')}: ${mB.name}</th><th style="width:75px;text-align:center">Match?</th></tr>`;
-  rows.forEach(r=>{
-    const match=r.compare?(r.a===r.b):null;
-    const matchIcon=match===null?'':(match?'<span class="match-yes">✓ Same</span>':'<span class="match-no">✗ Diff</span>');
-    const rowClass=match===null?'':(match?'highlight-match':'highlight-diff');
-    html+=`<tr class="${rowClass}"><td><strong>${r.key}</strong></td><td class="${r.mono?'mono':''}">${r.a}</td><td class="${r.mono?'mono':''}">${r.b}</td><td class="match-cell">${matchIcon}</td></tr>`;
-  });
-  if(hasMfrClaim){
-    const mfrStatus=mfrMismatch?`<span class="match-no">⚠️ Mfr. claims equiv — taxonomy disagrees [1]</span>`:`<span class="match-yes">✓ Mfr. claim agrees with taxonomy</span>`;
-    html+=`<tr><td><strong>Mfr. Claim?</strong></td><td colspan="2" style="font-size:10px;color:#555;">Hamilton website: <em>${mA.name}</em> ↔ <em>${mB.name}</em></td><td class="match-cell" style="font-size:10px;">${mfrStatus}</td></tr>`;
-  }
-  html+=`</table></div>`;
-  const sameTag=mA.tag===mB.tag;
-  const summaryColor=mfrMismatch?'#cc0000':(sameTag?'#006633':'#555');
-  let summaryText;
-  if(mfrMismatch){summaryText=`⚠️ <strong>Manufacturer vs. Taxonomy conflict:</strong> Hamilton's website equates these modes, but Chatburn et al. assigns different tags (<code>${mA.tag}</code> vs <code>${mB.tag}</code>). The taxonomy is the more rigorous tool [1].`;}
-  else if(sameTag){const varData=VARIETIES[mA.tag];const sameMode=mA.name===mB.name;summaryText=`✅ <strong>Taxonomically equivalent</strong> — same control variable, breath sequence, and targeting scheme [1].`+(varData&&!sameMode?' Different varieties — see 🔬 Variety Detail panel [1].':'');}
-  else{summaryText=`ℹ️ <strong>Not equivalent</strong> — ${getDiffSummary(mA,mB)} differ [1].`;}
-  html+=`<div style="margin-top:10px;padding:10px;border-radius:6px;background:#f8f8f8;border-left:4px solid ${summaryColor};font-size:11px;color:#333;">${summaryText}</div>`;
-  html+=`<div class="notes-grid"><div style="background:#f0f4ff;border-left:3px solid #003366;padding:8px;font-size:10px;border-radius:4px;"><strong>🔵 ${mA.name}</strong><br>${mA.notes}</div><div style="background:#fff5f0;border-left:3px solid #cc4400;padding:8px;font-size:10px;border-radius:4px;"><strong>🟠 ${mB.name}</strong><br>${mB.notes}</div></div>`;
-  document.getElementById('compareContent').innerHTML=html;
-}
-
-function resetAll(){
-  ['A','B'].forEach(side=>{
-    document.getElementById('vent'+side).value='';
-    document.getElementById('vent'+side).classList.remove('matched-vent');
-    populateModes(side,'');
-    document.getElementById('ventBadge'+side).classList.remove('visible');
-    document.getElementById('modeBadge'+side).classList.remove('visible');
-    selectedMode[side]=null;modeAutoMatched[side]=false;ventAutoSelected[side]=false;
-    clearPanel(side);hideMfrNote(side);
-  });
-  document.getElementById('equivBanner').className='equiv-banner';
-  document.getElementById('varietySection').style.display='none';
-  document.getElementById('compareContent').innerHTML='<div class="empty-state">Select modes on both sides to compare.</div>';
-}
-
-document.addEventListener('DOMContentLoaded',function(){
-  document.getElementById('ventA').addEventListener('change',function(){onVentChange('A');});
-  document.getElementById('ventB').addEventListener('change',function(){onVentChange('B');});
-  document.getElementById('modeA').addEventListener('change',function(){onModeChange('A');});
-  document.getElementById('modeB').addEventListener('change',function(){onModeChange('B');});
-  document.getElementById('resetBtn').addEventListener('click',resetAll);
-  document.addEventListener('click',function(e){
-    const chip=e.target.closest('.multi-match-chip');
-    if(chip){
-      const side=chip.dataset.side;const idx=parseInt(chip.dataset.idx,10);
-      if(side&&!isNaN(idx))selectChip(side,idx);
-    }
-  });
-});
 </script>
 </body>
 </html>
