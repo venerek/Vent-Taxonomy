@@ -49,9 +49,6 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
 .toggle-row{display:flex;border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-bottom:1rem;gap:0}
 .toggle-btn{flex:1;padding:0.5rem;text-align:center;cursor:pointer;font-size:0.82rem;font-weight:600;background:var(--bg2);border:none;color:var(--text2);transition:all 0.2s;border-radius:0}
 .toggle-btn.active{background:var(--accent);color:#fff}
-.abg-card{background:var(--pill-bg);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid var(--accent)}
-.abg-card .abg-label{font-size:0.72rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
-.abg-card .abg-value{font-size:0.88rem;color:var(--text1);margin-top:0.2rem}
 .comparator-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
 @media(max-width:600px){.comparator-grid{grid-template-columns:1fr}}
 .comparator-col{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.75rem}
@@ -70,14 +67,12 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
 .cite{font-size:0.75rem;color:var(--text2);margin-top:1rem;padding-top:0.5rem;border-top:1px solid var(--border)}
 .collapsible>h3{cursor:pointer;user-select:none}.collapsible>h3:hover{opacity:0.8}.collapsible.collapsed>*:not(h3){display:none !important}.collapsible.collapsed h3{margin-bottom:0}
 .collapse-indicator{float:right;font-size:0.75em;opacity:0.5;font-weight:400}
-/* Color-coded param borders by category */
 #sub0-0 .param-item{border-left-color:#0891b2}
 #sub0-1 .param-item{border-left-color:#059669}
 #sub0-2 .param-item{border-left-color:#d97706}
 #sub0-3 .param-item{border-left-color:#2563eb}
 #sub0-4 .param-item{border-left-color:#7c3aed}
 #sub0-5 .param-item{border-left-color:#dc2626}
-#sub0-6 .abg-card{border-left-color:#2563eb}
 #tab0>.sub-content>.card{border-left:4px solid #2563eb}
 #tab1>.sub-content>.card{border-left:4px solid #059669}
 #tab2>.rehab-sub-content>.card{border-left:4px solid #d97706}
@@ -105,6 +100,21 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
 .sync-sign{background:var(--pill-bg);border-radius:8px;padding:0.75rem;margin-bottom:0.6rem;border-left:3px solid var(--amber)}
 .sync-sign h4{margin:0 0 0.2rem;font-size:0.85rem;color:var(--text1)}.sync-sign p{font-size:0.8rem;color:var(--text2);margin:0}
 .sync-sign .sync-cause{font-size:0.75rem;color:var(--accent);margin-top:0.2rem;font-style:italic}
+.abg-card{background:var(--pill-bg);border-radius:10px;padding:1rem;margin-bottom:0.75rem;border-left:4px solid var(--border);transition:all 0.2s}
+.abg-card.escalate{border-left-color:var(--red)}
+.abg-card.deescalate{border-left-color:var(--green)}
+.abg-card .abg-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;flex-wrap:wrap}
+.abg-card .abg-direction{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:0.15rem 0.5rem;border-radius:4px}
+.abg-card .abg-direction.escalate{background:#fee2e2;color:#991b1b}
+.abg-card .abg-direction.deescalate{background:#d1fae5;color:#065f46}
+@media(prefers-color-scheme:dark){.abg-card .abg-direction.escalate{background:#7f1d1d;color:#fca5a5}.abg-card .abg-direction.deescalate{background:#064e3b;color:#6ee7b7}}
+.abg-card .abg-title{font-weight:700;font-size:0.9rem;color:var(--text1)}
+.abg-card .abg-problem{font-size:0.82rem;color:var(--text2);margin-bottom:0.6rem}
+.abg-card .abg-action-block{background:var(--bg2);border-radius:8px;padding:0.6rem 0.75rem;margin-bottom:0.5rem;transition:opacity 0.2s}
+.abg-card .abg-action-block .abg-action-label{font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2);margin-bottom:0.2rem}
+.abg-card .abg-action-block .abg-action-text{font-size:0.88rem;font-weight:600;color:var(--text1)}
+.abg-card .abg-action-block.dimmed{opacity:0.35}
+.abg-card .abg-safety{font-size:0.78rem;color:var(--amber);font-weight:500;margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -158,7 +168,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
           <div class="param-name">Tidal Volume (VT) <span class="param-range">6–8 mL/kg PBW</span></div>
           <div class="param-def">The volume of gas delivered to the patient during a single inspiration. Sized to predicted body weight — not actual weight — because lung size scales with PBW.</div>
           <div class="param-why">"Based on predicted body weight because lung size scales with PBW" [3]</div>
-          <div class="param-clinical">In VC → set directly by operator. In PC → dependent on respiratory system mechanics (elastance and resistance) [1]. PBW formula accounts for height and sex, not actual weight [3].</div>
+          <div class="param-clinical">In Volume Control → set directly by operator. In Pressure Control → dependent on respiratory system mechanics (elastance and resistance) [1]. PBW formula accounts for height and sex, not actual weight [3].</div>
         </div>
         <div class="param-item">
           <div class="param-name">Respiratory Rate <span class="param-range">10–35/min</span></div>
@@ -202,7 +212,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
         <div class="param-item">
           <div class="param-name">Pinsp <span class="param-range">Set above PEEP</span></div>
           <div class="param-def">The set inspiratory pressure above PEEP that drives gas flow into the lungs during pressure-controlled breaths.</div>
-          <div class="param-clinical">This is what determines tidal volume in PC modes — VT depends on the relationship between Pinsp and the patient's elastance and resistance [1].</div>
+          <div class="param-clinical">This is what determines tidal volume in Pressure Control modes — VT depends on the relationship between Pinsp and the patient's elastance and resistance [1].</div>
         </div>
       </div>
     </div>
@@ -216,13 +226,13 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
         <div class="param-item">
           <div class="param-name">Peak Inspiratory Flow <span class="param-range">≥ 50 L/min</span></div>
           <div class="param-def">The maximum gas flow rate during inspiration. When delivered flow does not match the patient's demand, flow starvation occurs.</div>
-          <div class="param-formula">In PC: Peak Flow = ΔP / R</div>
+          <div class="param-formula">In Pressure Control: Peak Flow = ΔP / R</div>
           <div class="param-why">Set ≥ 50 L/min to avoid flow starvation [3]</div>
-          <div class="param-clinical">In PC: peak flow is determined by the pressure difference divided by resistance [1]. In VC: set directly by operator.</div>
+          <div class="param-clinical">In Pressure Control: peak flow is determined by the pressure difference divided by resistance [1]. In Volume Control: set directly by operator.</div>
         </div>
         <div class="param-item">
           <div class="param-name">Flow Waveform <span class="param-range">Square vs ramp</span></div>
-          <div class="param-def">The shape of inspiratory flow over time. Square (constant) flow is used in VC; descending ramp (decelerating) flow occurs naturally in PC.</div>
+          <div class="param-def">The shape of inspiratory flow over time. Square (constant) flow is used in Volume Control; descending ramp (decelerating) flow occurs naturally in Pressure Control.</div>
           <div class="param-clinical">"Not all descending ramp waveforms are the same" — on some ventilators end-expiratory flow defaults to zero, on others it can be set as a percentage of peak flow [1].</div>
         </div>
       </div>
@@ -285,53 +295,74 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
     </div>
   </div>
 
-  <!-- ABG → Vent (now last) -->
+  <!-- ABG → Vent -->
   <div class="sub-content" id="sub0-6">
     <div class="card">
-      <h3>🩸 ABG → Ventilator Adjustment</h3>
+      <h3>🩸 ABG → Ventilator Response</h3>
+      <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.75rem">Identify the problem, then choose your lever based on the current mode:</p>
       <div class="toggle-row">
-        <button class="toggle-btn active" onclick="toggleABG(this,'vc')">I'm in VC</button>
-        <button class="toggle-btn" onclick="toggleABG(this,'pc')">I'm in PC</button>
+        <button class="toggle-btn active" onclick="toggleABG(this,'vc')">I'm in Volume Control</button>
+        <button class="toggle-btn" onclick="toggleABG(this,'pc')">I'm in Pressure Control</button>
       </div>
-      <div class="abg-card">
-        <div class="abg-label">🫁 Ventilation — Acidosis</div>
-        <div class="abg-value">
-          <strong>📋 PROBLEM</strong> ↑CO₂ / pH < 7.35<br>
-          <strong>💡 GOAL</strong> Increase CO₂ clearance<br>
-          <strong>🔧 LEVER</strong> Minute Ventilation (V̇E = VT × RR)<br>
-          <strong>💊 ACTION</strong> <span class="abg-vc">↑VT or ↑RR</span><span class="abg-pc" style="display:none">↑Pinsp (to ↑VT) or ↑RR</span><br>
-          <strong>⚠️</strong> <span class="abg-vc">Before ↑VT: check Pplat ≤ 30, ΔP < 15</span><span class="abg-pc" style="display:none">Monitor VT — may overdistend if compliance improves</span>
+
+      <div class="abg-card escalate">
+        <div class="abg-header">
+          <span class="abg-direction escalate">↑ Escalate</span>
+          <span class="abg-title">Inadequate Ventilation → Respiratory Acidosis</span>
         </div>
+        <div class="abg-problem">↑CO₂ / pH < 7.35 — the patient isn't clearing enough carbon dioxide</div>
+        <div class="abg-action-block abg-vc-block">
+          <div class="abg-action-label">Volume Control</div>
+          <div class="abg-action-text">↑ Tidal Volume or ↑ Respiratory Rate</div>
+        </div>
+        <div class="abg-action-block abg-pc-block dimmed">
+          <div class="abg-action-label">Pressure Control</div>
+          <div class="abg-action-text">↑ Pinsp (to ↑ VT) or ↑ Respiratory Rate</div>
+        </div>
+        <div class="abg-safety">⚠️ <span class="abg-vc-safety">Before ↑VT: check Pplat ≤ 30 cmH₂O, ΔP < 15</span><span class="abg-pc-safety" style="display:none">Monitor VT — may overdistend if compliance improves</span></div>
       </div>
-      <div class="abg-card">
-        <div class="abg-label">🫁 Ventilation — Alkalosis</div>
-        <div class="abg-value">
-          <strong>📋 PROBLEM</strong> ↓CO₂ / pH > 7.45<br>
-          <strong>💡 GOAL</strong> Decrease CO₂ clearance<br>
-          <strong>🔧 LEVER</strong> ↓ Minute Ventilation<br>
-          <strong>💊 ACTION</strong> <span class="abg-vc">↓VT or ↓RR</span><span class="abg-pc" style="display:none">↓Pinsp (to ↓VT) or ↓RR</span><br>
-          <strong>⚠️</strong> <span class="abg-vc">Ensure VT ≥ 6 mL/kg PBW</span><span class="abg-pc" style="display:none">Ensure VT ≥ 6 mL/kg PBW; monitor for apnea if ↓RR</span>
+
+      <div class="abg-card deescalate">
+        <div class="abg-header">
+          <span class="abg-direction deescalate">↓ De-escalate</span>
+          <span class="abg-title">Excessive Ventilation → Respiratory Alkalosis</span>
         </div>
+        <div class="abg-problem">↓CO₂ / pH > 7.45 — the patient is blowing off too much carbon dioxide</div>
+        <div class="abg-action-block abg-vc-block">
+          <div class="abg-action-label">Volume Control</div>
+          <div class="abg-action-text">↓ Tidal Volume or ↓ Respiratory Rate</div>
+        </div>
+        <div class="abg-action-block abg-pc-block dimmed">
+          <div class="abg-action-label">Pressure Control</div>
+          <div class="abg-action-text">↓ Pinsp (to ↓ VT) or ↓ Respiratory Rate</div>
+        </div>
+        <div class="abg-safety">⚠️ <span class="abg-vc-safety">Ensure VT ≥ 6 mL/kg PBW</span><span class="abg-pc-safety" style="display:none">Ensure VT ≥ 6 mL/kg PBW; monitor for apnea if ↓RR significantly</span></div>
       </div>
-      <div class="abg-card">
-        <div class="abg-label">💨 Oxygenation — Hypoxemia</div>
-        <div class="abg-value">
-          <strong>📋 PROBLEM</strong> ↓PaO₂ / SpO₂ < 92%<br>
-          <strong>💡 GOAL</strong> Improve oxygen delivery<br>
-          <strong>🔧 LEVER</strong> FiO₂ + PEEP (alveolar recruitment)<br>
-          <strong>💊 ACTION</strong> ↑FiO₂ first → then ↑PEEP<br>
-          <strong>⚠️</strong> Before ↑PEEP: consider hemodynamics — may ↓CO
+
+      <div class="abg-card escalate">
+        <div class="abg-header">
+          <span class="abg-direction escalate">↑ Escalate</span>
+          <span class="abg-title">Inadequate Oxygenation → Hypoxemia</span>
         </div>
+        <div class="abg-problem">↓PaO₂ / SpO₂ < 92% — not enough oxygen reaching the blood</div>
+        <div class="abg-action-block">
+          <div class="abg-action-label">Both Modes</div>
+          <div class="abg-action-text">↑ FiO₂ and/or ↑ PEEP</div>
+        </div>
+        <div class="abg-safety">⚠️ FiO₂ is hemodynamically neutral; PEEP may ↓ cardiac output — consider hemodynamic tolerance before escalating PEEP [3]</div>
       </div>
-      <div class="abg-card">
-        <div class="abg-label">💨 Oxygenation — Weaning</div>
-        <div class="abg-value">
-          <strong>📋 PROBLEM</strong> Adequate O₂ on high FiO₂<br>
-          <strong>💡 GOAL</strong> Reduce O₂ toxicity risk<br>
-          <strong>🔧 LEVER</strong> Wean FiO₂ → then PEEP<br>
-          <strong>💊 ACTION</strong> ↓FiO₂ to SpO₂ 92–96%, then ↓PEEP<br>
-          <strong>⚠️</strong> Wean FiO₂ before PEEP; monitor for derecruitment
+
+      <div class="abg-card deescalate">
+        <div class="abg-header">
+          <span class="abg-direction deescalate">↓ De-escalate</span>
+          <span class="abg-title">Adequate Oxygenation → Wean Support</span>
         </div>
+        <div class="abg-problem">SpO₂ adequate on high support — reduce FiO₂ toxicity and PEEP-related hemodynamic load</div>
+        <div class="abg-action-block">
+          <div class="abg-action-label">Both Modes</div>
+          <div class="abg-action-text">↓ FiO₂ and/or ↓ PEEP toward SpO₂ 92–96%</div>
+        </div>
+        <div class="abg-safety">⚠️ Reducing PEEP risks derecruitment; reducing FiO₂ does not. Consider weaning FiO₂ when both are elevated [3]</div>
       </div>
     </div>
   </div>
@@ -355,7 +386,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
     <button class="sub-tab" onclick="switchSub(1,3)">Targeting Schemes</button>
   </div>
 
-  <!-- Foundations (rewritten) -->
+  <!-- Foundations -->
   <div class="sub-content active" id="sub1-0">
     <div class="card">
       <h3>🫁 Foundations</h3>
@@ -397,25 +428,25 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
         <div class="eq-cite"><span style="color:var(--blue)">■</span> E = elastance (elastic load) · <span style="color:var(--purple)">■</span> R = resistance (resistive load) [2]</div>
       </div>
       <div class="toggle-row" style="margin-top:1rem">
-        <button class="toggle-btn active" onclick="toggleCV(this,'pc')">PC</button>
-        <button class="toggle-btn" onclick="toggleCV(this,'vc')">VC</button>
+        <button class="toggle-btn active" onclick="toggleCV(this,'pc')">Pressure Control</button>
+        <button class="toggle-btn" onclick="toggleCV(this,'vc')">Volume Control</button>
       </div>
       <div id="cv-pc">
         <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;border-top:3px solid var(--blue)">
-          <strong style="color:var(--blue)">PC — Pressure predetermined</strong><br>
+          <strong style="color:var(--blue)">Pressure Control — Pressure predetermined</strong><br>
           <span style="font-size:0.82rem;color:var(--text2)">✅ Set: Inspiratory pressure<br>📈 Dependent: Volume/Flow vary with E, R<br>💪 Effort: "Patient effort → more VT. Total work increases" [1].</span>
         </div>
       </div>
       <div id="cv-vc" style="display:none">
         <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;border-top:3px solid var(--green)">
-          <strong style="color:var(--green)">VC — Volume AND Flow predetermined</strong><br>
+          <strong style="color:var(--green)">Volume Control — Volume AND Flow predetermined</strong><br>
           <span style="font-size:0.82rem;color:var(--text2)">✅ Set: VT AND flow<br>📈 Dependent: Pressure varies<br>💪 Effort: "Total work stays constant. As Pmus↑, Pvent↓. Patient can't get more volume" [1].</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Breath Sequence (plain language added) -->
+  <!-- Breath Sequence -->
   <div class="sub-content" id="sub1-2">
     <div class="card collapsible">
       <h3>CMV | Continuous Mandatory Ventilation</h3>
@@ -451,7 +482,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
       <table>
         <tr><th>TS</th><th>Name</th><th>Definition</th><th></th></tr>
         <tr><td><strong>s</strong></td><td>Set-point</td><td>Operator sets all parameters directly [2].</td><td><span class="badge badge-green">COMMON</span></td></tr>
-        <tr><td><strong>d</strong></td><td>Dual</td><td>Switches between VC and PC within a single breath [2].</td><td><span class="badge badge-green">COMMON</span></td></tr>
+        <tr><td><strong>d</strong></td><td>Dual</td><td>Switches between Volume Control and Pressure Control within a single breath [2].</td><td><span class="badge badge-green">COMMON</span></td></tr>
         <tr><td><strong>a</strong></td><td>Adaptive</td><td>Adjusts pressure between breaths to achieve a VT target [2].</td><td><span class="badge badge-green">COMMON</span></td></tr>
         <tr><td><strong>o</strong></td><td>Optimal</td><td>Minimizes or maximizes an overall performance metric [2].</td><td><span class="badge badge-amber">RARE</span></td></tr>
         <tr><td><strong>i</strong></td><td>Intelligent</td><td>Uses AI: fuzzy logic, expert systems, neural networks [2].</td><td><span class="badge badge-amber">RARE</span></td></tr>
@@ -548,7 +579,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
     </div>
   </div>
 
-  <!-- Synchrony (merged Cycling + Dyssynchrony) -->
+  <!-- Synchrony -->
   <div class="rehab-sub-content" id="rehab2">
     <div class="card">
       <h3>🔄 Patient-Ventilator Synchrony</h3>
@@ -569,7 +600,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
       <div class="sync-sign">
         <h4>😤 Air hunger / gasping between breaths</h4>
         <p>Patient is working to trigger but the vent isn't responding fast enough, or delivered flow doesn't match demand.</p>
-        <div class="sync-cause">→ Likely: trigger delay, flow starvation (VC), or missed triggers [1]</div>
+        <div class="sync-cause">→ Likely: trigger delay, flow starvation (Volume Control), or missed triggers [1]</div>
       </div>
 
       <div class="sync-sign">
@@ -603,7 +634,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
       </div>
       <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid var(--accent)">
         <p style="font-size:0.85rem;margin-bottom:0.5rem"><strong>2. Is it the mode?</strong></p>
-        <p style="font-size:0.82rem;color:var(--text2)">If in VC-CMVs or PC-CMVa → the mode may be actively working against the patient (see Effort & Modes). Consider switching to PC-CSVs or PC-CMVs.</p>
+        <p style="font-size:0.82rem;color:var(--text2)">If in Volume Control or PRVC → the mode may be actively working against the patient (see Effort & Modes). Consider switching to Pressure Support or Pressure Control.</p>
       </div>
       <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;border-left:3px solid var(--accent)">
         <p style="font-size:0.85rem;margin-bottom:0.5rem"><strong>3. Is it the parameters?</strong></p>
@@ -611,12 +642,12 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
       </div>
       <div style="background:var(--pill-bg);border-radius:8px;padding:0.75rem;border-left:3px solid var(--accent)">
         <p style="font-size:0.85rem;margin-bottom:0.5rem"><strong>4. Communicate specifically</strong></p>
-        <p style="font-size:0.82rem;color:var(--text2)">Instead of "they look uncomfortable" → "Patient appears to be double-triggering with activity — can we assess cycle threshold?" or "Patient showing signs of flow starvation — is there room to increase support or switch from VC?"</p>
+        <p style="font-size:0.82rem;color:var(--text2)">Instead of "they look uncomfortable" → "Patient appears to be double-triggering with activity — can we assess cycle threshold?" or "Patient showing signs of flow starvation — is there room to increase support or switch from Volume Control?"</p>
       </div>
 
       <h4 style="margin-top:1.25rem">Why Cycling Type Matters</h4>
       <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.5rem">The cycling mechanism determines whether the ventilator's timing can align with the patient's neural timing:</p>
-      <div class="good-box"><strong>Flow-Cycled (PC-CSVs)</strong><br>"Flow cycling is a form of patient cycling because the rate of flow decay to the cycle threshold is determined by patient mechanics" [2]. The patient's own time constant controls when the breath ends → natural synchrony.</div>
+      <div class="good-box"><strong>Flow-Cycled (Pressure Support / PC-CSVs)</strong><br>"Flow cycling is a form of patient cycling because the rate of flow decay to the cycle threshold is determined by patient mechanics" [2]. The patient's own time constant controls when the breath ends → natural synchrony.</div>
       <div class="bad-box"><strong>Time/Volume-Cycled (CMV modes)</strong><br>Ventilator ends the breath at a preset time or volume regardless of the patient's neural timing. During activity, as respiratory drive changes, the mismatch between neural Ti and vent Ti widens → dyssynchrony [1].</div>
     </div>
   </div>
@@ -639,7 +670,7 @@ th{background:var(--bg2);font-weight:600;color:var(--text1)}
           <span class="checklist-icon primary">2</span>
           <div class="checklist-content">
             <strong>Mode — Flow on Demand</strong>
-            <div class="checklist-detail">Consider PC-CMVs or PC-CSVs if in VC-CMVs or PC-CMVa. Active patients benefit from modes that reward effort with flow [1].</div>
+            <div class="checklist-detail">Consider Pressure Control or Pressure Support if in Volume Control or PRVC. Active patients benefit from modes that reward effort with flow [1].</div>
           </div>
         </li>
         <li class="checklist-item">
@@ -771,8 +802,10 @@ function switchRehab(idx){
 function toggleABG(btn,mode){
   btn.parentElement.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('.abg-vc').forEach(el=>el.style.display=mode==='vc'?'inline':'none');
-  document.querySelectorAll('.abg-pc').forEach(el=>el.style.display=mode==='pc'?'inline':'none');
+  document.querySelectorAll('.abg-vc-block').forEach(el=>{el.classList.toggle('dimmed',mode!=='vc')});
+  document.querySelectorAll('.abg-pc-block').forEach(el=>{el.classList.toggle('dimmed',mode!=='pc')});
+  document.querySelectorAll('.abg-vc-safety').forEach(el=>{el.style.display=mode==='vc'?'inline':'none'});
+  document.querySelectorAll('.abg-pc-safety').forEach(el=>{el.style.display=mode==='pc'?'inline':'none'});
 }
 
 function toggleCV(btn,mode){
@@ -874,7 +907,6 @@ function resetComparator(){
   document.getElementById('match-indicator').style.display='none';updateComparison();
 }
 
-// Collapsible cards
 document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.card.collapsible').forEach(card=>{
     const h=card.querySelector('h3');if(!h)return;
